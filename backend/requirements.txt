@@ -1,0 +1,24 @@
+# Core
+fastapi[standard]
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# Database
+sqlalchemy
+aiosqlite
+greenlet
+
+# Redis
+redis
+
+# Gemini
+google-genai
+
+# GitHub
+httpx
+
+# Utilities
+python-dotenv
+python-multipart
+pytest
