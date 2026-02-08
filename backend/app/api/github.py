@@ -100,13 +100,16 @@ async def _set_session(response: Response, data: dict) -> str:
         json.dumps(data)
     )
     
+    # Dynamic cookie security
+    is_https = str(settings.backend_url).startswith("https")
+    
     # Set cookie
     response.set_cookie(
         key="session_id",
         value=session_id,
         httponly=True,
-        secure=settings.app_env == "production",
-        samesite="lax",
+        secure=is_https,  # Only secure if using HTTPS
+        samesite="none" if is_https else "lax", # None required for cross-domain HTTPS
         max_age=3600 * 24,
     )
     
@@ -269,9 +272,11 @@ async def get_repos(
         )
         
         if repos_response.status_code != 200:
+            print(f"❌ GitHub API Error: {repos_response.status_code} - {repos_response.text}")
             raise HTTPException(status_code=repos_response.status_code, detail="Failed to fetch repos")
         
         repos_data = repos_response.json()
+        print(f"DEBUG: Found {len(repos_data)} repos for user")
     
     # Transform and optionally filter
     repos = []
