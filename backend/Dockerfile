@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.9-slim-bookworm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     build-essential \
-    openjdk-17-jdk \
+    default-jdk \
     maven \
     golang-go \
     ruby-full \
