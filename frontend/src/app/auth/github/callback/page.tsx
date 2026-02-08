@@ -24,7 +24,7 @@ function GithubCallbackContent() {
                 await github.completeCallback(code, state);
 
                 // Redirect back to connect page on success
-                router.push("/connect");
+                router.push("/");
             } catch (err) {
                 console.error("Auth error:", err);
                 setError(err instanceof Error ? err.message : "Failed to complete authentication");
@@ -44,7 +44,7 @@ function GithubCallbackContent() {
                     <h1 className="text-xl font-bold text-gray-900 mb-2">Authentication Failed</h1>
                     <p className="text-gray-600 mb-6">{error}</p>
                     <button
-                        onClick={() => router.push("/connect")}
+                        onClick={() => router.push("/")}
                         className="w-full py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
                     >
                         Return to Connect

@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     
     # Gemini (Single key, single model)
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash-preview-05-20"
+    gemini_model: str = "gemini-3-flash-preview"
     gemini_max_tokens: int = 8192
     gemini_temperature: float = 0.1
     gemini_timeout_seconds: int = 60

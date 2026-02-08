@@ -486,7 +486,7 @@ function MigratePageContent() {
                         {error || "We couldn't initialize the migration session. The job ID might be invalid or the server is unreachable."}
                     </p>
                     <button
-                        onClick={() => router.push("/connect")}
+                        onClick={() => router.push("/")}
                         className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all hover:shadow-lg hover:shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-[0.98]"
                     >
                         <ArrowRight className="w-4 h-4 rotate-180" />
