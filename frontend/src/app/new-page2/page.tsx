@@ -3,86 +3,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Image from "next/image";
 import Link from "next/link";
-import { Copy, Check, Terminal, Play, Pause, FastForward, Shield, Layout, Settings, Activity, GitBranch, Cpu, CheckCircle } from 'lucide-react';
+import { Terminal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Simulated Terminal Logs
-const TERMINAL_LOGS = [
-    { type: "info", msg: "Kandra Agent Initialized v2.4.0" },
-    { type: "info", msg: "Connecting to repository..." },
-    { type: "success", msg: "Repository connected. 142 files found." },
-    { type: "info", msg: "Analyzing dependency graph..." },
-    { type: "warning", msg: "Detected legacy pattern: Callback Hell in /server/routes" },
-    { type: "info", msg: "Generating migration plan (Strategy: Recursive)" },
-    { type: "success", msg: "Plan approved. Starting execution phase." },
-    { type: "exe", msg: ">> Migrating src/utils/db.js -> src/utils/db.ts" },
-    { type: "success", msg: "✓ src/utils/db.ts compiled" },
-    { type: "exe", msg: ">> Migrating src/api/user.js -> src/api/user.ts" },
-    { type: "info", msg: "Running autonomous verification suite..." },
-    { type: "success", msg: "✓ Test suite passed (45/45 tests)" },
-    { type: "success", msg: "Migration complete. PR ready for review." },
-];
 
-function TerminalView() {
-    const [logs, setLogs] = useState<typeof TERMINAL_LOGS>([]);
-    const [isClient, setIsClient] = useState(false);
-    const scrollRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        setIsClient(true);
-        let index = 0;
-        const interval = setInterval(() => {
-            if (index < TERMINAL_LOGS.length) {
-                const newLog = TERMINAL_LOGS[index];
-                if (newLog) {
-                    setLogs(prev => [...prev, newLog]);
-                }
-                index++;
-                if (scrollRef.current) {
-                    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-                }
-            } else {
-                setLogs([]);
-                index = 0;
-            }
-        }, 800);
-        return () => clearInterval(interval);
-    }, []);
-
-    const getTime = () => {
-        if (!isClient) return "00:00:00";
-        return new Date().toLocaleTimeString('en-US', { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    };
-
-    return (
-        <div className="bg-slate-900 rounded-xl overflow-hidden font-mono text-xs shadow-inner h-full flex flex-col border border-slate-800">
-            <div className="flex items-center px-4 py-2 bg-slate-950 border-b border-slate-800">
-                <Terminal className="w-3 h-3 text-slate-400 mr-2" />
-                <span className="text-slate-400">Agent Terminal</span>
-            </div>
-            <div className="p-4 flex-1 overflow-y-auto space-y-1.5 scrollbar-hide" ref={scrollRef}>
-                {logs.map((log, i) => (
-                    <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        key={i}
-                        className="flex gap-2"
-                    >
-                        <span className="text-slate-600 select-none min-w-[60px]">{getTime()}</span>
-                        <span className={`
-                            ${log.type === 'success' ? 'text-green-400' : ''}
-                            ${log.type === 'warning' ? 'text-amber-400' : ''}
-                            ${log.type === 'info' ? 'text-blue-300' : ''}
-                            ${log.type === 'exe' ? 'text-purple-300' : ''}
-                        `}>
-                            {log.msg}
-                        </span>
-                    </motion.div>
-                ))}
-            </div>
-        </div>
-    );
-}
 
 export default function LandingPage() {
     return (
@@ -219,7 +143,7 @@ export default function LandingPage() {
                                 <a
                                     href="/connect"
                                     target="_blank"
-                                    className="button is-nav is-smaller w-button"
+                                    className="button is-nav is-smaller w-button !bg-blue-600 !text-white"
                                 >
                                     Start Migration
                                 </a>
@@ -239,8 +163,23 @@ export default function LandingPage() {
                     </div>
                 </div>
                 <main className="main-wrapper">
-                    <header className="section_header">
-                        <div className="padding-global">
+                    <header className="section_header relative overflow-hidden">
+                        {/* Premium Background Effects */}
+                        <div className="absolute inset-0 z-0 pointer-events-none">
+                            {/* Ambient Glows */}
+                            <div className="absolute top-[-50%] left-[-20%] w-[1000px] h-[1000px] rounded-full bg-blue-600/15 blur-[120px]" />
+                            <div className="absolute top-[0%] right-[-20%] w-[800px] h-[800px] rounded-full bg-purple-600/15 blur-[120px]" />
+
+                            {/* Technical Grid Pattern */}
+                            <div className="absolute inset-0" style={{
+                                backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
+                                backgroundSize: '40px 40px',
+                                maskImage: 'radial-gradient(circle at 50% 50%, black 30%, transparent 80%)',
+                                WebkitMaskImage: 'radial-gradient(circle at 50% 50%, black 30%, transparent 80%)'
+                            }} />
+                        </div>
+
+                        <div className="padding-global relative z-10">
                             <div className="container-large">
                                 <div
                                     data-w-id="bf5a07ee-214c-2457-7a01-5def51dd7edf"
@@ -268,7 +207,7 @@ export default function LandingPage() {
                                         <div className="join-us_buttons-wrapper-ls">
                                             <a
                                                 href="/connect"
-                                                className="button w-button"
+                                                className="button w-button !bg-blue-600 !text-white"
                                             >
                                                 Start Migration
                                             </a>
@@ -280,1320 +219,169 @@ export default function LandingPage() {
                                             </a>
                                         </div>
                                     </div>
-                                    <div
-                                        id="w-node-_13281a38-0a87-af56-f7b1-400bf7a8fe8b-e2060821"
-                                        className="ls-hero-image-wrapper"
-                                    >
-                                        <div className="bg-slate-950 rounded-xl overflow-hidden shadow-2xl border border-slate-800 p-1 w-full h-[500px] relative">
-                                            <TerminalView />
-                                        </div>
+                                    <div className="w-full h-[500px] relative overflow-hidden" style={{
+                                        // CSS Mask for fading edges into background
+                                        maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 100%)',
+                                        WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 100%)'
+                                    }}>
+                                        <video
+                                            autoPlay
+                                            loop
+                                            muted
+                                            playsInline
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'cover',
+                                                opacity: 1 // Full opacity since mask handles the fade
+                                            }}
+                                        >
+                                            <source src="https://cdn.pixabay.com/video/2022/03/16/110946-689949689_large.mp4" type="video/mp4" />
+                                            Your browser does not support the video tag.
+                                        </video>
+
+                                        {/* Optional: Deep Blue tint to ensure it matches the brand theme if the video is too distinctive */}
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            right: 0,
+                                            bottom: 0,
+                                            background: 'rgba(15, 23, 42, 0.2)', // Slate-900 tint
+                                            pointerEvents: 'none'
+                                        }} />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="header_background-video-wrapper is-orange" />
+
                     </header>
-                    <section
-                        data-w-id="f5bc57f5-937b-522e-baf3-91c65601f66c"
-                        className="section_tools-logos"
-                    >
+
+                    <section className="section_code-transform relative py-24 overflow-hidden">
                         <div className="padding-global">
                             <div className="container-large">
-                                <div
-                                    data-w-id="f5bc57f5-937b-522e-baf3-91c65601f66f"
-                                    className="logo_component is-ls"
-                                >
-                                    <p className="text-size-body1">
-                                        Loved by 10,000+ developers who hate manual rewrites
+                                <div className="text-center mb-16">
+                                    <h2 className="heading-style-h2 mb-4">Architectural Intelligence.</h2>
+                                    <p className="text-size-body1 text-slate-500 max-w-2xl mx-auto">
+                                        Kandra doesn't just format code. It understands your entire project's context, refactors business logic, and standardizes patterns across thousands of files.
                                     </p>
-                                    <div className="banner_tasks hide-mobile-portrait">
-                                        <div className="banner_wrapper">
-                                            <div className="banner_marquee w-dyn-list">
-                                                <div
-                                                    role="list"
-                                                    className="banner_marquee-inner is-new w-dyn-items"
-                                                >
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680b77461846a7cf254d8391_Klarna_Logo_black%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1d39b2c6c806093f171_GitLab_logo_(2)%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/681b541fe451e978c3ccddd2_logo_clay.png"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63bc524be687757a9ab4c_logo_linkedin.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680f49cea075b0f09f44edc0_logo_rippling.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68f29b61b55203228fab9833_logo_vanta.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1aa251143166667aec3_logo_Rakuten.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680b77b2f63a9dcf3b2fac9f_The_Home_Depot-Logo.wine%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63c37daf9c4b95bc8a254_logo_loreal.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63c7f9b2ef2d8e52abdd6_logo_schneider%20electric.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1c1c55df212370b53fd_logo_Elastic.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63cb12ad03835ebf875de_logo_dun%20and%20bradstreet.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d206eefdb37789451855_The_Home_Depot-Logo.wine%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63d22da049beb5d48299d_logo_vizient.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1ddfdc1291f495b3697_AppFolio%2C_Inc._Wordmark%2C_2021%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680f49d608d82e8411f67557_logo_podium.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="banner_marquee w-dyn-list">
-                                                <div
-                                                    role="list"
-                                                    className="banner_marquee-inner is-new w-dyn-items"
-                                                >
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680b77461846a7cf254d8391_Klarna_Logo_black%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1d39b2c6c806093f171_GitLab_logo_(2)%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/681b541fe451e978c3ccddd2_logo_clay.png"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63bc524be687757a9ab4c_logo_linkedin.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680f49cea075b0f09f44edc0_logo_rippling.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68f29b61b55203228fab9833_logo_vanta.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1aa251143166667aec3_logo_Rakuten.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680b77b2f63a9dcf3b2fac9f_The_Home_Depot-Logo.wine%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63c37daf9c4b95bc8a254_logo_loreal.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63c7f9b2ef2d8e52abdd6_logo_schneider%20electric.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1c1c55df212370b53fd_logo_Elastic.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63cb12ad03835ebf875de_logo_dun%20and%20bradstreet.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d206eefdb37789451855_The_Home_Depot-Logo.wine%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63d22da049beb5d48299d_logo_vizient.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1ddfdc1291f495b3697_AppFolio%2C_Inc._Wordmark%2C_2021%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680f49d608d82e8411f67557_logo_podium.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="banner_marquee w-dyn-list">
-                                                <div
-                                                    role="list"
-                                                    className="banner_marquee-inner is-new w-dyn-items"
-                                                >
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680b77461846a7cf254d8391_Klarna_Logo_black%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1d39b2c6c806093f171_GitLab_logo_(2)%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/681b541fe451e978c3ccddd2_logo_clay.png"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63bc524be687757a9ab4c_logo_linkedin.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680f49cea075b0f09f44edc0_logo_rippling.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68f29b61b55203228fab9833_logo_vanta.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1aa251143166667aec3_logo_Rakuten.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680b77b2f63a9dcf3b2fac9f_The_Home_Depot-Logo.wine%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63c37daf9c4b95bc8a254_logo_loreal.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63c7f9b2ef2d8e52abdd6_logo_schneider%20electric.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1c1c55df212370b53fd_logo_Elastic.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63cb12ad03835ebf875de_logo_dun%20and%20bradstreet.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d206eefdb37789451855_The_Home_Depot-Logo.wine%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63d22da049beb5d48299d_logo_vizient.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1ddfdc1291f495b3697_AppFolio%2C_Inc._Wordmark%2C_2021%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680f49d608d82e8411f67557_logo_podium.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="banner_marquee w-dyn-list">
-                                                <div
-                                                    role="list"
-                                                    className="banner_marquee-inner is-new w-dyn-items"
-                                                >
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680b77461846a7cf254d8391_Klarna_Logo_black%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1d39b2c6c806093f171_GitLab_logo_(2)%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/681b541fe451e978c3ccddd2_logo_clay.png"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63bc524be687757a9ab4c_logo_linkedin.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680f49cea075b0f09f44edc0_logo_rippling.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68f29b61b55203228fab9833_logo_vanta.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1aa251143166667aec3_logo_Rakuten.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680b77b2f63a9dcf3b2fac9f_The_Home_Depot-Logo.wine%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63c37daf9c4b95bc8a254_logo_loreal.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63c7f9b2ef2d8e52abdd6_logo_schneider%20electric.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1c1c55df212370b53fd_logo_Elastic.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63cb12ad03835ebf875de_logo_dun%20and%20bradstreet.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d206eefdb37789451855_The_Home_Depot-Logo.wine%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63d22da049beb5d48299d_logo_vizient.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1ddfdc1291f495b3697_AppFolio%2C_Inc._Wordmark%2C_2021%201.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                    <div role="listitem" className="w-dyn-item">
-                                                        <img
-                                                            src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680f49d608d82e8411f67557_logo_podium.svg"
-                                                            loading="lazy"
-                                                            alt=""
-                                                            className="logos-collection-item"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="mobile-version">
-                                        <div className="banner_tasks">
-                                            <div className="banner_wrapper">
-                                                <div className="banner_marquee w-dyn-list">
-                                                    <div
-                                                        role="list"
-                                                        className="banner_marquee-inner is-new w-dyn-items"
-                                                    >
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680b77461846a7cf254d8391_Klarna_Logo_black%201.svg"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1d39b2c6c806093f171_GitLab_logo_(2)%201.svg"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/681b541fe451e978c3ccddd2_logo_clay.png"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63bc524be687757a9ab4c_logo_linkedin.svg"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680f49cea075b0f09f44edc0_logo_rippling.svg"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68f29b61b55203228fab9833_logo_vanta.svg"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1aa251143166667aec3_logo_Rakuten.svg"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="banner_marquee w-dyn-list">
-                                                    <div
-                                                        role="list"
-                                                        className="banner_marquee-inner is-new w-dyn-items"
-                                                    >
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680b77461846a7cf254d8391_Klarna_Logo_black%201.svg"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1d39b2c6c806093f171_GitLab_logo_(2)%201.svg"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/681b541fe451e978c3ccddd2_logo_clay.png"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63bc524be687757a9ab4c_logo_linkedin.svg"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680f49cea075b0f09f44edc0_logo_rippling.svg"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68f29b61b55203228fab9833_logo_vanta.svg"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                        <div role="listitem" className="w-dyn-item">
-                                                            <img
-                                                                src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1aa251143166667aec3_logo_Rakuten.svg"
-                                                                loading="lazy"
-                                                                alt=""
-                                                                className="logos-collection-item"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div
-                                            lumious-ticker-speed={13}
-                                            lumious-ticker="true"
-                                            className="ticker-2 is-reversed w-dyn-list"
-                                        >
-                                            <div
-                                                lumious-ticker-content="true"
-                                                role="list"
-                                                className="ticker-content-2 w-dyn-items"
-                                            >
-                                                <div role="listitem" className="ticker-logo-2 w-dyn-item">
-                                                    <img
-                                                        width="Auto"
-                                                        height="Auto"
-                                                        alt=""
-                                                        src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680b77b2f63a9dcf3b2fac9f_The_Home_Depot-Logo.wine%201.svg"
-                                                        loading="lazy"
-                                                    />
-                                                </div>
-                                                <div role="listitem" className="ticker-logo-2 w-dyn-item">
-                                                    <img
-                                                        width="Auto"
-                                                        height="Auto"
-                                                        alt=""
-                                                        src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63c37daf9c4b95bc8a254_logo_loreal.svg"
-                                                        loading="lazy"
-                                                    />
-                                                </div>
-                                                <div role="listitem" className="ticker-logo-2 w-dyn-item">
-                                                    <img
-                                                        width="Auto"
-                                                        height="Auto"
-                                                        alt=""
-                                                        src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63c7f9b2ef2d8e52abdd6_logo_schneider%20electric.svg"
-                                                        loading="lazy"
-                                                    />
-                                                </div>
-                                                <div role="listitem" className="ticker-logo-2 w-dyn-item">
-                                                    <img
-                                                        width="Auto"
-                                                        height="Auto"
-                                                        alt=""
-                                                        src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1c1c55df212370b53fd_logo_Elastic.svg"
-                                                        loading="lazy"
-                                                    />
-                                                </div>
-                                                <div role="listitem" className="ticker-logo-2 w-dyn-item">
-                                                    <img
-                                                        width="Auto"
-                                                        height="Auto"
-                                                        alt=""
-                                                        src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63cb12ad03835ebf875de_logo_dun%20and%20bradstreet.svg"
-                                                        loading="lazy"
-                                                    />
-                                                </div>
-                                                <div role="listitem" className="ticker-logo-2 w-dyn-item">
-                                                    <img
-                                                        width="Auto"
-                                                        height="Auto"
-                                                        alt=""
-                                                        src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d206eefdb37789451855_The_Home_Depot-Logo.wine%201.svg"
-                                                        loading="lazy"
-                                                    />
-                                                </div>
-                                                <div role="listitem" className="ticker-logo-2 w-dyn-item">
-                                                    <img
-                                                        width="Auto"
-                                                        height="Auto"
-                                                        alt=""
-                                                        src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/68e63d22da049beb5d48299d_logo_vizient.svg"
-                                                        loading="lazy"
-                                                    />
-                                                </div>
-                                                <div role="listitem" className="ticker-logo-2 w-dyn-item">
-                                                    <img
-                                                        width="Auto"
-                                                        height="Auto"
-                                                        alt=""
-                                                        src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/6811d1ddfdc1291f495b3697_AppFolio%2C_Inc._Wordmark%2C_2021%201.svg"
-                                                        loading="lazy"
-                                                    />
-                                                </div>
-                                                <div role="listitem" className="ticker-logo-2 w-dyn-item">
-                                                    <img
-                                                        width="Auto"
-                                                        height="Auto"
-                                                        alt=""
-                                                        src="https://cdn.prod.website-files.com/65c81e88c254bb0f97633a71/680f49d608d82e8411f67557_logo_podium.svg"
-                                                        loading="lazy"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </section>
-                    <section className="section_layout is-product">
-                        <div className="padding-global is-wide">
-                            <div className="container-xlarge">
-                                <div className="product_bg-wrapper background-color-violet200 islangsmith is-ls">
-                                    <div className="w-layout-grid product_component is-inverted islangsmith is-ls">
-                                        <div
-                                            data-w-id="39b292f5-42d3-75e5-f867-498b4ced7d6e"
-                                            className="product_carousel"
-                                        >
-                                            <img
-                                                src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/68f2d23758d9e2dc05609887_LS-obs-1.webp"
-                                                loading="lazy"
-                                                alt=""
-                                                className="product_carousel-img-1"
-                                            />
-                                        </div>
-                                        <div className="product_text-wrapper is-ls">
-                                            <div className="product_text-content align-left">
-                                                <h2 className="heading-style-h2 text-balance">
-                                                    For the platform folks
-                                                </h2>
-                                                <p className="text-size-medium">
-                                                    You&apos;re juggling 50 services and someone wants everything on Spring Boot by Q3. Kandra makes that conversation a lot less painful.
-                                                </p>
-                                                <a
-                                                    href="/migrate"
-                                                    className="button is-link w-inline-block"
-                                                >
-                                                    <div>Start a migration</div>
-                                                    <div className="link_icon w-embed">
-                                                        <svg
-                                                            width={15}
-                                                            height={14}
-                                                            viewBox="0 0 15 14"
-                                                            fill="none"
-                                                            xmlns="http://www.w3.org/2000/svg"
-                                                        >
-                                                            <path
-                                                                fillRule="evenodd"
-                                                                clipRule="evenodd"
-                                                                d="M14.0788 1.96304L2.33407 13.7077L0.919861 12.2935L12.6645 0.548828L14.0788 1.96304Z"
-                                                                fill="CurrentColor"
-                                                            />
-                                                            <path
-                                                                fillRule="evenodd"
-                                                                clipRule="evenodd"
-                                                                d="M12.5 2H1.5V0H14.5V13H12.5V2Z"
-                                                                fill="CurrentColor"
-                                                            />
-                                                        </svg>
-                                                    </div>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                    <section className="section_layout is-product">
-                        <div className="padding-global is-wide">
-                            <div className="container-xlarge">
-                                <div className="product_bg-wrapper background-color-violet200 islangsmith is-ls">
-                                    <div className="w-layout-grid product_component islangsmith is-down-mobile is-ls">
-                                        <div className="product_text-wrapper is-ls-reverse">
-                                            <div className="product_text-content align-left">
-                                                <h2 className="heading-style-h2 text-balance">
-                                                    For the leads planning upgrades
-                                                </h2>
-                                                <p className="text-size-medium">
-                                                    Get a clear migration plan before you commit. See exactly what changes, what breaks, and what tests need updating—then decide if you&apos;re ready.
-                                                </p>
-                                                <a
-                                                    href="/migrate"
-                                                    className="button is-link w-inline-block"
-                                                >
-                                                    <div>See a sample plan</div>
-                                                    <div className="link_icon w-embed">
-                                                        <svg
-                                                            width={15}
-                                                            height={14}
-                                                            viewBox="0 0 15 14"
-                                                            fill="none"
-                                                            xmlns="http://www.w3.org/2000/svg"
-                                                        >
-                                                            <path
-                                                                fillRule="evenodd"
-                                                                clipRule="evenodd"
-                                                                d="M14.0788 1.96304L2.33407 13.7077L0.919861 12.2935L12.6645 0.548828L14.0788 1.96304Z"
-                                                                fill="CurrentColor"
-                                                            />
-                                                            <path
-                                                                fillRule="evenodd"
-                                                                clipRule="evenodd"
-                                                                d="M12.5 2H1.5V0H14.5V13H12.5V2Z"
-                                                                fill="CurrentColor"
-                                                            />
-                                                        </svg>
-                                                    </div>
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <div
-                                            data-w-id="39b292f5-42d3-75e5-f867-498b4ced7d89"
-                                            className="product_carousel"
-                                        >
-                                            <img
-                                                src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/68e63f4be76d8fa925232455_LS-obs-2%201.webp"
-                                                loading="lazy"
-                                                alt=""
-                                                className="product_carousel-img-1"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                    <section className="section_layout is-product more-padding-bottom">
-                        <div className="padding-global is-wide">
-                            <div className="container-xlarge">
-                                <div className="product_bg-wrapper background-color-violet200 islangsmith is-ls">
-                                    <div className="w-layout-grid product_component is-inverted islangsmith is-ls">
-                                        <div
-                                            data-w-id="e82e8e01-d9e8-5486-34d6-ec198db20ec1"
-                                            className="product_carousel"
-                                        >
-                                            <img
-                                                src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/68e63f4bafbabae796df8a8c_LS-obs-3%203.webp"
-                                                loading="lazy"
-                                                alt=""
-                                                className="product_carousel-img-1"
-                                            />
-                                        </div>
-                                        <div className="product_text-wrapper is-ls">
-                                            <div className="product_text-content align-left">
-                                                <h2 className="heading-style-h2 text-balance">
-                                                    For developers in the trenches
-                                                </h2>
-                                                <p className="text-size-medium">
-                                                    One repo or a hundred. Paste the URL, pick your target, and get back to building features instead of fighting with syntax.
-                                                </p>
-                                                <a
-                                                    href="/migrate"
-                                                    className="button is-link w-inline-block"
-                                                >
-                                                    <div>Start coding</div>
-                                                    <div className="link_icon w-embed">
-                                                        <svg
-                                                            width={15}
-                                                            height={14}
-                                                            viewBox="0 0 15 14"
-                                                            fill="none"
-                                                            xmlns="http://www.w3.org/2000/svg"
-                                                        >
-                                                            <path
-                                                                fillRule="evenodd"
-                                                                clipRule="evenodd"
-                                                                d="M14.0788 1.96304L2.33407 13.7077L0.919861 12.2935L12.6645 0.548828L14.0788 1.96304Z"
-                                                                fill="CurrentColor"
-                                                            />
-                                                            <path
-                                                                fillRule="evenodd"
-                                                                clipRule="evenodd"
-                                                                d="M12.5 2H1.5V0H14.5V13H12.5V2Z"
-                                                                fill="CurrentColor"
-                                                            />
-                                                        </svg>
-                                                    </div>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                    <section className="section_layout is-cta-block is-ls">
-                        <div className="padding-global is-wide">
-                            <div className="container-xlarge">
-                                <div className="cta-block_bg-content-orange is-ls">
-                                    <h2
-                                        data-w-id="ef5c979f-f952-e409-2ac5-450e280b94b1"
-                                        className="heading-style-h2 text-align-center"
-                                    >
-                                        Built for people who&apos;d rather ship than rewrite
-                                    </h2>
-                                    <div className="spacer-24" />
-                                    <div className="max-width-870">
-                                        <p
-                                            data-w-id="cf3c02fd-707b-2c98-4fb1-0fe3a08d312d"
-                                            className="text-size-body2-2 text-align-center"
-                                        >
-                                            We&apos;ve all been there—staring at legacy code, knowing the rewrite will take months. Kandra handles the grunt work so you can focus on what actually matters.
-                                        </p>
-                                    </div>
-                                    <div className="spacer-72 _40-mobile" />
-                                    <div
-                                        data-w-id="ef5c979f-f952-e409-2ac5-450e280b94b3"
-                                        className="cta-block_buttons-wrap langsmithpage is-ls"
-                                    >
-                                        <a
-                                            href="/connect"
-                                            className="button w-button"
-                                        >
-                                            Try It Free
-                                        </a>
-                                        <a
-                                            href="/contact-sales"
-                                            className="button is-alternate w-button"
-                                        >
-                                            Contact Sales
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                    <div className="section-ls-3col">
-                        <div className="padding-global">
-                            <div className="container-xlarge">
-                                <div className="ls-3col-wrapper">
-                                    <h2 data-w-id="eda21252-6eb4-60df-875a-6fa3edc5300c">
-                                        Don&apos;t take our word for it.<br /> Here&apos;s what people are saying.
-                                    </h2>
-                                    <div className="spacer-112 _60-landscape _40-mobile" />
-                                    <div
-                                        data-w-id="d144cbaa-7376-06fa-50e3-a694ad3a5ea4"
-                                        className="ls-3col"
-                                    >
-                                        <div className="ls-3col-col">
-                                            <div className="ls-col-top" />
-                                            <div className="ls-col-bottom">
-                                                <div className="text-style-label is-opacity-80 is-color-white">
-                                                    Founder
-                                                </div>
-                                                <h5 className="text-balance">
-                                                    &quot;We had a Java monolith nobody wanted to touch. Kandra turned a 6-month project into 3 weeks. I&apos;m not exaggerating.&quot;
-                                                </h5>
-                                                <div className="text-size-body2">- Chris S.</div>
-                                            </div>
-                                        </div>
-                                        <div className="ls-3col-col">
-                                            <div className="ls-col-top is-orange" />
-                                            <div className="ls-col-bottom">
-                                                <div className="text-style-label is-opacity-80 is-color-white">
-                                                    Senior Dev
-                                                </div>
-                                                <h5 className="balance-mobile">
-                                                    &quot;Okay so I was mass skeptical at first. &apos;AI migration tool&apos; sounds like vaporware. But it actually works? The generated code passed our CI on the first try. Wild.&quot;
-                                                </h5>
-                                                <div className="text-size-body2">- Jack O.</div>
 
+                                <div className="relative w-full max-w-5xl mx-auto">
+                                    {/* Glassmorphic IDE Window */}
+                                    <div className="rounded-xl border border-slate-200 bg-white/80 backdrop-blur-xl shadow-2xl overflow-hidden relative z-10">
+                                        {/* IDE Toolbar */}
+                                        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                                            <div className="flex space-x-2">
+                                                <div className="w-3 h-3 rounded-full bg-red-400/80" />
+                                                <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
+                                                <div className="w-3 h-3 rounded-full bg-green-400/80" />
                                             </div>
+                                            <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
+                                                <Terminal size={12} />
+                                                <span>kandra_agent_view</span>
+                                            </div>
+                                            <div className="w-16" />
                                         </div>
-                                        <div className="ls-3col-col">
-                                            <div className="ls-col-top" />
-                                            <div className="ls-col-bottom">
-                                                <div className="text-style-label is-opacity-80 is-color-white">
-                                                    Tech Lead
+
+                                        {/* Split View Content */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 text-sm font-mono leading-relaxed relative min-h-[400px]">
+
+                                            {/* LEFT: Legacy Code (Messy) */}
+                                            <div className="p-8 bg-slate-50/50 text-slate-400 relative border-r border-slate-100">
+                                                <div className="mb-4 flex items-center justify-between">
+                                                    <span className="text-xs uppercase tracking-wider font-semibold text-red-500/70 flex items-center gap-2">
+                                                        <span>❌ Legacy Pattern</span>
+                                                    </span>
+                                                    <span className="px-2 py-1 rounded bg-red-100 text-red-600 text-[10px] font-bold">BLOCKING I/O</span>
                                                 </div>
-                                                <h5 className="text-balance">
-                                                    &quot;Finally convinced my team to migrate off Express. Showed them Kandra&apos;s output and suddenly everyone was on board.&quot;
-                                                </h5>
-                                                <div className="text-size-body2">- Jane P.</div>
+                                                <pre className="overflow-x-auto"><code>{`function processUser(id, cb) {
+  // ⚠️ Callback Hell & No Types
+  
+  db.find({id: id}, function(err, user) {
+    if(err) return cb(err);
+    
+    // ⚠️ Implicit 'any' type
+    if(!user) return cb("No user");
+
+    // 🚩 N+1 Query Problem
+    getProfile(user.pid, function(err, prof) {
+      if(err) return cb(err);
+      
+      // ⚠️ Business Logic Leak
+      if(prof.status === 'active') {
+        cb(null, prof);
+      } else {
+        cb("Inactive");
+      }
+    });
+  });
+}`}</code></pre>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </main >
-                <footer className="footer_component-orange">
-                    <div className="padding-global">
-                        <div className="footer_top-component">
-                            <div className="w-layout-grid footer_top-wrapper">
-                                <div className="w-layout-grid footer_left-wrapper">
-                                    <div className="footer_link-list">
-                                        <div className="margin-bottom margin-xxsmall">
-                                            <div className="heading-style-h6">Products</div>
-                                        </div>
-                                        <div
-                                            id="w-node-ed59fd8f-4548-9b12-643e-b1816711f5bf-6711f5b5"
-                                            className="footer-link_column"
-                                        >
-                                            <a href="/" className="footer_link">
-                                                Kandra
-                                            </a>
-                                            <a
-                                                id="w-node-ed59fd8f-4548-9b12-643e-b1816711f5c4-6711f5b5"
-                                                href="/docs"
-                                                className="footer_link"
-                                            >
-                                                Documentation
-                                            </a>
-                                            <a
-                                                href="/pricing"
-                                                aria-current="page"
-                                                className="footer_link w--current"
-                                            >
-                                                Pricing
-                                            </a>
-                                            <a href="/blog" className="footer_link">
-                                                Blog
-                                            </a>
-                                            <a href="/login" className="footer_link">
-                                                Login
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div className="footer_link-list">
-                                        <div className="margin-bottom margin-xxsmall">
-                                            <div className="heading-style-h6">Resources</div>
-                                        </div>
-                                        <div className="footer-link_column is-resources">
-                                            <a href="/resources" className="footer_link">
-                                                Guides
-                                            </a>
-                                            <a
-                                                href="https://blog.langchain.com"
-                                                target="_blank"
-                                                className="footer_link"
-                                            >
-                                                Blog
-                                            </a>
-                                            <a href="/customers" className="footer_link">
-                                                Customer Stories
-                                            </a>
-                                            <a
-                                                href="#"
-                                                target="_blank"
-                                                className="footer_link"
-                                            >
-                                                Kandra Academy
-                                            </a>
-                                            <a href="/join-community" className="footer_link">
-                                                Community
-                                            </a>
-                                            <a
-                                                href="#"
-                                                target="_blank"
-                                                className="footer_link"
-                                            >
-                                                Events
-                                            </a>
-                                            <a
-                                                href="https://changelog.langchain.com/"
-                                                target="_blank"
-                                                className="footer_link"
-                                            >
-                                                Changelog
-                                            </a>
-                                            <a
-                                                href="http://docs.langchain.com/"
-                                                target="_blank"
-                                                className="footer_link"
-                                            >
-                                                Docs
-                                            </a>
-                                            <a
-                                                href="/support"
-                                                target="_blank"
-                                                className="footer_link"
-                                            >
-                                                Support
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div className="footer_link-list">
-                                        <div className="margin-bottom margin-xxsmall">
-                                            <div className="heading-style-h6">Company</div>
-                                        </div>
-                                        <div className="footer-link_column">
-                                            <a href="/about" className="footer_link">
-                                                About
-                                            </a>
-                                            <a href="/careers" className="footer_link">
-                                                Careers
-                                            </a>
-                                            <a
-                                                href="https://twitter.com/Kandra"
-                                                target="_blank"
-                                                className="footer_link"
-                                            >
-                                                X
-                                            </a>
-                                            <a
-                                                href="https://www.linkedin.com/company/kandra/"
-                                                target="_blank"
-                                                className="footer_link"
-                                            >
-                                                LinkedIn
-                                            </a>
-                                            <a
-                                                href="https://www.youtube.com/@Kandra"
-                                                target="_blank"
-                                                className="footer_link"
-                                            >
-                                                YouTube
-                                            </a>
-                                            <a
-                                                href="https://drive.google.com/drive/folders/17xybjzmVBdsQA-VxouuGLxF6bDsHDe80?usp=sharing"
-                                                target="_blank"
-                                                className="footer_link"
-                                            >
-                                                Marketing Assets
-                                            </a>
-                                            <a
-                                                href="#"
-                                                target="_blank"
-                                                className="footer_link"
-                                            >
-                                                Security
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div
-                                    id="w-node-ed59fd8f-4548-9b12-643e-b1816711f5ee-6711f5b5"
-                                    className="footer_right-wrapper"
-                                >
-                                    <div className="margin-bottom margin-xsmall">
-                                        <div className="footer__form-title">
-                                            <div className="footer-circle" />
-                                            <div className="max-width-300-mobile">
-                                                <div className="heading-style-h6">
-                                                    Sign up for our newsletter to stay up to date
+
+                                            {/* CENTER: Agent Reasoning Overlay */}
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center">
+                                                {/* Pulsing Brain Node */}
+                                                <div className="relative w-16 h-16 flex items-center justify-center rounded-full bg-slate-950 text-blue-400 shadow-[0_0_40px_rgba(59,130,246,0.3)] border border-slate-800">
+                                                    <div className="absolute inset-0 rounded-full border border-blue-500/30 animate-ping" />
+                                                    <Terminal size={24} />
+                                                </div>
+
+                                                {/* Live Thought Stream */}
+                                                <div className="mt-4 w-64 bg-slate-900/90 backdrop-blur text-white p-3 rounded-lg border border-slate-700 shadow-xl text-[10px] font-mono space-y-2">
+                                                    <div className="flex items-center gap-2 text-blue-300">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                                                        <span>Analyzing dependency graph...</span>
+                                                    </div>
+                                                    <div className="text-slate-400 pl-3.5">
+                                                        {`> Found 'Callback Hell' pattern`}
+                                                    </div>
+                                                    <div className="text-slate-400 pl-3.5">
+                                                        {`> Resolved 'UserProfile' generic`}
+                                                    </div>
+                                                    <div className="text-green-400 pl-3.5">
+                                                        {`> Applied 'Async/Await' transform`}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                    <div className="footer_form-block w-form">
-                                        <form
-                                            id="wf-form-footer_form"
-                                            name="wf-form-footer_form"
-                                            data-name="footer_form"
-                                            action="https://langchain.us11.list-manage.com/subscribe/post?u=4ad47fb6a8889d6654064ff1b&amp;id=6bc1ef8ac4&amp;f_id=0072b7e0f0"
-                                            method="post"
-                                            data-webflow-hubspot-api-form-url="https://hubspotonwebflow.com/api/forms/175bb662-7202-4470-b7b0-85c3e4bf7321"
-                                            className="footer_form"
-                                            data-wf-page-id="68e6349d06062d03e2060821"
-                                            data-wf-element-id="ed59fd8f-4548-9b12-643e-b1816711f5f5"
-                                        >
-                                            <input
-                                                className="form_input w-input"
-                                                data-wfhsfieldname="FormTextInput-2"
-                                                maxLength={256}
-                                                name="EMAIL"
-                                                data-name="EMAIL"
-                                                placeholder="your email..."
-                                                type="email"
-                                                id="EMAIL"
-                                                required
-                                            />
-                                            <input
-                                                type="submit"
-                                                data-wait="Please wait..."
-                                                aria-label="Subscribe"
-                                                className="news_button w-button"
-                                                defaultValue=""
-                                            />
-                                            <input type="hidden" name="hutk" defaultValue="" />
-                                            <input type="hidden" name="ipAddress" defaultValue="" />
-                                            <input type="hidden" name="pageUri" defaultValue="" />
-                                            <input type="hidden" name="pageId" defaultValue="" />
-                                            <input type="hidden" name="pageName" defaultValue="" />
-                                        </form>
-                                        <div className="form_success is-footer w-form-done">
-                                            <div>Thank you! Your submission has been received!</div>
-                                        </div>
-                                        <div className="form_error is-news w-form-fail">
-                                            <div>
-                                                Oops! Something went wrong while submitting the form.
+
+                                            {/* RIGHT: Modern Code (Clean) */}
+                                            <div className="p-8 bg-white text-slate-800 relative">
+                                                <div className="mb-4 flex items-center justify-between">
+                                                    <span className="text-xs uppercase tracking-wider font-semibold text-blue-600 flex items-center gap-2">
+                                                        <span>✅ Kandra Architecture</span>
+                                                    </span>
+                                                    <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-[10px] font-bold">TYPE-SAFE</span>
+                                                </div>
+                                                <pre className="overflow-x-auto"><code>{`async function processUser(id: string): Promise<UserProfile> {
+  // ✨ Parallelized Data Fetching
+  const user = await db.find({ id });
+  
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  // ✨ Global Type Definition
+  const profile = await getProfile(user.pid);
+  
+  // ✨ Standardized Error Handling
+  if (profile.status !== 'active') {
+    throw new InactiveUserError();
+  }
+
+  return profile;
+}`}</code></pre>
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Decorative Blob Behind */}
+                                    <div className="absolute -inset-10 bg-gradient-to-r from-blue-100/50 via-purple-100/50 to-pink-100/50 blur-3xl -z-10 opacity-60 rounded-[3rem]" />
                                 </div>
                             </div>
                         </div>
-                        <img
-                            src="https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/65c6a38f9c53ec71f5fc73de_langchain-word.svg"
-                            loading="lazy"
-                            alt=""
-                            className="footer_logo"
-                        />
-                    </div>
-                    <div className="padding-global is-bottom-footer">
-                        <div className="footer_bottom-component">
-                            <div className="padding-vertical">
-                                <div className="footer_bottom">
-                                    <a
-                                        href="#"
-                                        target="_blank"
-                                        className="footer_link is-status w-inline-block"
-                                    >
-                                        <div className="status-dot" />
-                                        <div>
-                                            All systems <span className="system-status">operational</span>
-                                        </div>
-                                    </a>
-                                    <div className="privacy-group">
-                                        <a href="/privacy-policy" className="footer_link">
-                                            Privacy Policy
-                                        </a>
-                                        <a href="/terms-of-service" className="footer_link">
-                                            Terms of Service
-                                        </a>
-                                    </div>
-                                    <div className="hide w-embed w-script"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </footer>
+                    </section>
+                </main>
             </div>
             {/* Google Tag Manager (noscript) */}
             <noscript>

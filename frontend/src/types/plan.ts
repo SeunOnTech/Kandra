@@ -11,38 +11,34 @@ export interface PlanSummary {
     risk_level: "low" | "medium" | "high";
 }
 
-export interface PlanStats {
-    files_to_modify?: number;
-    files_to_create?: number;
-    files_to_delete?: number;
-    dependencies_to_add?: number;
-    dependencies_to_remove?: number;
-}
-
-export interface StackInfo {
-    stack: string;
-    language: string;
-    key_features: string[];
-}
-
 export interface Transformation {
-    source: StackInfo;
-    target: StackInfo;
+    source_stack: string;
+    target_stack: string;
+    strategy: string;
+    package_manager?: string;  // Dynamically discovered from research
+    test_framework?: string;   // Dynamically discovered from research
+    build_tool?: string;       // Dynamically discovered from research
+}
+
+export interface ImpactedFile {
+    source: string;
+    target: string;
+    reason: string;
+}
+
+export interface PhaseVerification {
+    test_commands: string[];
+    success_criteria: string;
 }
 
 export interface PlanPhase {
     id: number;
     title: string;
     description: string;
+    instructions: string[];
     tasks: string[];
-    files_affected: string[];
-}
-
-export interface FileChange {
-    path: string;
-    action: "create" | "modify" | "delete" | "transform";
-    new_path?: string;
-    reason: string;
+    files_impacted: ImpactedFile[];
+    verification: PhaseVerification;
 }
 
 export interface Dependency {
@@ -55,19 +51,22 @@ export interface Dependencies {
     remove: Dependency[];
 }
 
-export interface Verification {
-    auto_checks: string[];
-    success_criteria: string;
+export interface Source {
+    uri: string;
+    title: string;
+}
+
+export interface ResearchSummary {
+    sources_consulted: Source[];
+    search_queries: string[];
 }
 
 export interface MigrationPlan {
+    research_summary?: ResearchSummary;  // NEW: Research metadata from grounding
     summary: PlanSummary;
-    stats: PlanStats;
     transformation: Transformation;
     phases: PlanPhase[];
-    file_changes: FileChange[];
     dependencies: Dependencies;
-    verification: Verification;
 }
 
 /**

@@ -50,6 +50,66 @@ const MOCK_ANALYSIS = {
     ]
 };
 
+// Featured repositories for instant try-out experience
+const FEATURED_REPOS = [
+    {
+        url: "https://github.com/SeunOnTech/crypto-analyzer-legacy",
+        html_url: "https://github.com/SeunOnTech/crypto-analyzer-legacy",
+        clone_url: "https://github.com/SeunOnTech/crypto-analyzer-legacy.git",
+        name: "crypto-analyzer-legacy",
+        full_name: "SeunOnTech/crypto-analyzer-legacy",
+        owner: { avatar_url: "https://github.com/SeunOnTech.png" },
+        language: "JavaScript",
+        description: "Legacy crypto portfolio tracker with callbacks",
+        stargazers_count: 142,
+        updated_at: new Date().toISOString(),
+        private: false,
+        id: 90001,
+    },
+    {
+        url: "https://github.com/SeunOnTech/crypto-analyzer-legacy",
+        html_url: "https://github.com/SeunOnTech/crypto-analyzer-legacy",
+        clone_url: "https://github.com/SeunOnTech/crypto-analyzer-legacy.git",
+        name: "crypto-analyzer-legacy",
+        full_name: "SeunOnTech/crypto-analyzer-legacy",
+        owner: { avatar_url: "https://github.com/SeunOnTech.png" },
+        language: "JavaScript",
+        description: "Legacy crypto portfolio tracker with callbacks",
+        stargazers_count: 142,
+        updated_at: new Date().toISOString(),
+        private: false,
+        id: 90002,
+    },
+    {
+        url: "https://github.com/SeunOnTech/crypto-analyzer-legacy",
+        html_url: "https://github.com/SeunOnTech/crypto-analyzer-legacy",
+        clone_url: "https://github.com/SeunOnTech/crypto-analyzer-legacy.git",
+        name: "crypto-analyzer-legacy",
+        full_name: "SeunOnTech/crypto-analyzer-legacy",
+        owner: { avatar_url: "https://github.com/SeunOnTech.png" },
+        language: "JavaScript",
+        description: "Legacy crypto portfolio tracker with callbacks",
+        stargazers_count: 142,
+        updated_at: new Date().toISOString(),
+        private: false,
+        id: 90003,
+    },
+    {
+        url: "https://github.com/SeunOnTech/crypto-analyzer-legacy",
+        html_url: "https://github.com/SeunOnTech/crypto-analyzer-legacy",
+        clone_url: "https://github.com/SeunOnTech/crypto-analyzer-legacy.git",
+        name: "crypto-analyzer-legacy",
+        full_name: "SeunOnTech/crypto-analyzer-legacy",
+        owner: { avatar_url: "https://github.com/SeunOnTech.png" },
+        language: "JavaScript",
+        description: "Legacy crypto portfolio tracker with callbacks",
+        stargazers_count: 142,
+        updated_at: new Date().toISOString(),
+        private: false,
+        id: 90004,
+    },
+];
+
 export default function ConnectPage() {
     const router = useRouter();
     const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -442,6 +502,59 @@ export default function ConnectPage() {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
                                 <span>Paste Repository URL</span>
                             </button>
+
+                            {/* FEATURED PROJECTS SECTION */}
+                            <div className="mt-8 pt-6 border-t border-border/50">
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    Or try Kandra on a <span className="font-semibold text-foreground">featured project:</span>
+                                </p>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    {FEATURED_REPOS.map((repo) => (
+                                        <div
+                                            key={repo.id}
+                                            onClick={() => openStartModal(repo as Repository)}
+                                            className="group relative p-4 rounded-xl border border-border/50 bg-gradient-to-br from-white/80 to-slate-50/50 backdrop-blur-sm hover:border-blue-400/60 hover:shadow-xl hover:shadow-blue-500/10 cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden"
+                                        >
+                                            {/* Gradient Glow Overlay */}
+                                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                            {/* Featured Badge */}
+                                            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold shadow-sm border border-blue-100/50">
+                                                Featured
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="relative z-10">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className={cn(
+                                                        "w-2 h-2 rounded-full",
+                                                        repo.language === "JavaScript" ? "bg-yellow-400" : "bg-blue-500"
+                                                    )} />
+                                                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                        {repo.language}
+                                                    </span>
+                                                </div>
+
+                                                <h3 className="font-semibold text-sm text-foreground group-hover:text-blue-600 transition-colors mb-1 truncate pr-12">
+                                                    {repo.name}
+                                                </h3>
+                                                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                                                    {repo.description}
+                                                </p>
+
+                                                {/* Hover Action Pill */}
+                                                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0">
+                                                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-600 text-white text-[10px] font-medium shadow-lg">
+                                                        <span>Try It</span>
+                                                        <ArrowRight className="w-3 h-3" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -761,14 +874,6 @@ export default function ConnectPage() {
                             </div>
                         </div>
                     )}
-                </div>
-
-                {/* Footer Alert */}
-                <div className="w-full max-w-[500px] mx-auto">
-                    <div className="bg-muted/40 border border-border rounded-lg p-4 text-xs text-muted-foreground leading-relaxed">
-                        <strong>$100 in free credits</strong> when you connect a repository for the first time.
-                        Limited time offer for beta users.
-                    </div>
                 </div>
             </div>
 

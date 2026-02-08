@@ -27,6 +27,7 @@ import { tryParsePlan } from "@/types/plan";
 import { ExecutionView } from "@/components/execute/ExecutionView";
 import { VerificationView } from "@/components/verify/VerificationView";
 import { PlanningView } from "@/components/plan/PlanningView";
+import { AuditView } from "@/components/audit/AuditView";
 
 // Dynamically import Mermaid to avoid SSR issues
 const MermaidDiagram = dynamic(() => import("@/components/MermaidDiagram"), {
@@ -318,7 +319,7 @@ function ImplementationView({
 const STEPS = [
     { id: 0, label: "Planning", icon: Brain },
     { id: 1, label: "Executing", icon: Code2 },
-    { id: 2, label: "Verifying", icon: ShieldCheck },
+    { id: 2, label: "Certifying", icon: ShieldCheck },
 ];
 
 // === Main Page Content ===
@@ -333,7 +334,7 @@ function MigratePageContent() {
     const [error, setError] = useState<string | null>(null);
 
     // UI state
-    const [currentStep, setCurrentStep] = useState(0); // 0=Planning, 1=Executing, 2=Verifying
+    const [currentStep, setCurrentStep] = useState(0); // 0=Planning, 1=Executing, 2=Certifying
 
     // Execution State
     const [executionLogs, setExecutionLogs] = useState<any[]>([]);
@@ -361,7 +362,7 @@ function MigratePageContent() {
                     if (event.status === "PLANNING") setCurrentStep(0);
                     if (event.status === "EXECUTING") setCurrentStep(1);
                     if (event.status === "VERIFYING") setCurrentStep(2);
-                    if (event.status === "COMPLETED") setCurrentStep(3);
+                    if (event.status === "COMPLETED") setCurrentStep(2);
                     break;
                 case "plan_chunk":
                     // Complete plan sent as single chunk - replace instead of append
@@ -374,7 +375,7 @@ function MigratePageContent() {
                     break;
                 case "execution_complete":
                     setIsExecutionComplete(true);
-                    setTimeout(() => setCurrentStep(2), 2000); // Move to verify after delay
+                    setTimeout(() => setCurrentStep(2), 2000); // Move to certifying after delay
                     break;
             }
         },
@@ -394,8 +395,7 @@ function MigratePageContent() {
                 setJob(data);
                 if (data.status === "CREATED" || data.status === "PLANNING" || data.status === "AWAITING_APPROVAL") setCurrentStep(0);
                 else if (data.status === "EXECUTING") setCurrentStep(1);
-                else if (data.status === "VERIFYING") setCurrentStep(2);
-                else if (data.status === "COMPLETED") setCurrentStep(3);
+                else if (data.status === "VERIFYING" || data.status === "COMPLETED") setCurrentStep(2);
             } catch (err: any) {
                 setError(err.message || "Failed to load job");
             } finally {
@@ -579,8 +579,8 @@ function MigratePageContent() {
                         )}
 
                         {currentStep === 2 && (
-                            <motion.div key="verifying" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-                                <VerificationView jobId={jobId!} />
+                            <motion.div key="audit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+                                <AuditView jobId={jobId!} />
                             </motion.div>
                         )}
                     </AnimatePresence>

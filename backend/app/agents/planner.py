@@ -8,110 +8,101 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.db.models import Job, JobEvent
-from app.integrations.gemini import stream
+from app.integrations.gemini import stream, generate_with_grounding
 from app.integrations.redis_client import publish_event
 
 
-# === System Prompt ===
+# === System Prompts ===
 
-PLANNER_SYSTEM_PROMPT = """You are an elite software architect creating a structured migration plan for Kandra, an autonomous code migration agent.
+RESEARCH_DRIVEN_PLANNER_PROMPT = """You are an elite software architect with access to real-time web search via Google Search.
 
-## CRITICAL: OUTPUT FORMAT
+## YOUR RESEARCH CAPABILITIES
+You have access to Google Search. When planning a migration, you can search for:
+1. Official documentation of the target framework
+2. Migration guides from source to target
+3. Current best practices and conventions
+4. Common pitfalls and solutions
+5. Latest package managers, test frameworks, and build tools
+
+## CRITICAL: SEARCH BEFORE YOU PLAN
+**DO NOT assume you know the latest syntax or conventions.**
+
+Before creating the migration plan, you MUST search for:
+- "{target_stack} latest version setup guide"
+- "migrate {source_stack} to {target_stack} best practices"
+- "{target_stack} project structure conventions"
+- "{target_stack} package manager" (to discover npm/pnpm/pip/poetry/etc.)
+- "{target_stack} testing framework" (to discover jest/pytest/vitest/etc.)
+- "{target_stack} build tool" (to discover vite/webpack/rollup/etc.)
+- "{target_stack} file extensions" (to discover .py/.ts/.rs/etc.)
+
+Use the information from these searches to create an accurate, up-to-date migration plan with REAL commands.
+
+## OUTPUT FORMAT
 You MUST output ONLY valid JSON. No markdown, no explanations, no code blocks around the JSON.
 The JSON must follow this exact structure:
 
 {
   "summary": {
     "title": "Source Framework → Target Framework Migration",
-    "description": "A clear 1-2 sentence description of what this migration accomplishes",
-    "confidence": 85,
-    "estimated_duration": "3-5 minutes",
+    "description": "Clear 1-2 sentence description of the migration strategy",
+    "confidence": 95,
+    "estimated_duration": "5-10 minutes",
     "risk_level": "low"
   },
-  "stats": {
-    "files_to_modify": 5,
-    "files_to_create": 3,
-    "files_to_delete": 1,
-    "dependencies_to_add": 4,
-    "dependencies_to_remove": 2
-  },
   "transformation": {
-    "source": {
-      "stack": "Express.js",
-      "language": "JavaScript",
-      "key_features": ["Feature 1", "Feature 2", "Feature 3"]
-    },
-    "target": {
-      "stack": "Fastify",
-      "language": "TypeScript",
-      "key_features": ["New Feature 1", "New Feature 2", "New Feature 3"]
-    }
+    "source_stack": "Original Stack",
+    "target_stack": "Target Stack",
+    "strategy": "Description of the transformation strategy (e.g., 'Modular Rewrite', 'Direct Port')",
+    "package_manager": "discovered from search (e.g., npm, pnpm, pip, poetry)",
+    "test_framework": "discovered from search (e.g., jest, pytest, vitest)",
+    "build_tool": "discovered from search (e.g., vite, webpack, rollup)",
+    "file_extensions": ["discovered from search (e.g., ['.py'], ['.ts', '.tsx'], ['.rs'])"]
   },
   "phases": [
     {
       "id": 1,
       "title": "Phase Title",
-      "description": "What this phase accomplishes",
-      "tasks": [
-        "Specific task 1 description",
-        "Specific task 2 description",
-        "Specific task 3 description"
+      "description": "High-level goal of this phase",
+      "instructions": [
+        "DETAILED technical instruction 1 (e.g., 'Map legacy MySQL types to SQLAlchemy models in models.py')",
+        "DETAILED technical instruction 2 (e.g., 'Ensure all password logic uses Argon2 as per security policy')",
+        "DETAILED technical instruction 3 (e.g., 'Reference legacy file X for the specific math logic in function Y')"
       ],
-      "files_affected": ["file1.ts", "file2.ts"]
-    }
-  ],
-  "file_changes": [
-    {
-      "path": "src/app.js",
-      "action": "transform",
-      "new_path": "src/app.ts",
-      "reason": "Brief explanation of why this file changes"
-    },
-    {
-      "path": "src/newfile.ts",
-      "action": "create",
-      "reason": "Brief explanation of why this file is created"
+      "tasks": [
+        "Concrete task 1",
+        "Concrete task 2"
+      ],
+      "files_impacted": [
+        {"source": "legacy/path.js", "target": "new/path.py", "reason": "Why this file exists"}
+      ],
+      "verification": {
+        "test_commands": ["command_to_verify_success using tools discovered from search"],
+        "success_criteria": "Specific technical state that defines completion"
+      }
     }
   ],
   "dependencies": {
-    "add": [
-      {"name": "fastify", "reason": "Core framework"},
-      {"name": "typescript", "reason": "Type safety"}
-    ],
-    "remove": [
-      {"name": "express", "reason": "Replaced by Fastify"}
-    ]
-  },
-  "verification": {
-    "auto_checks": ["Check 1", "Check 2", "Check 3"],
-    "success_criteria": "What defines a successful migration"
+    "add": [{"name": "pkg", "reason": "Why needed"}],
+    "remove": [{"name": "old_pkg", "reason": "Why removed"}]
   }
 }
 
 ## IMPORTANT RULES:
-1. Output ONLY the JSON object, nothing else - no markdown, no ```json blocks
-2. Include at least 4-6 phases for comprehensive plans
-3. Each phase should have 3-5 specific tasks
-4. List ALL files that will be changed
-5. Be specific about dependencies
-6. confidence should be 0-100 (integer)
-7. risk_level must be "low", "medium", or "high"
-8. estimated_duration should be realistic (e.g., "2-4 minutes", "5-10 minutes")
-9. Make the plan COMPREHENSIVE - don't skip steps
+1. **SEARCH FIRST**: Before generating any commands, search for official documentation
+2. **CITE SOURCES**: Use information from your searches, not assumptions
+3. **STACK PURITY**: Only use tools/commands for the target stack (discovered via search)
+4. **NO CODE**: Don't include code snippets, only detailed instructions
+5. **VERIFICATION**: Every phase must have test commands from official docs
+6. **PHASE INDEPENDENCE**: Each phase must be self-contained
+7. **LEGACY MAPPING**: Always explicitly map legacy source files to target files
+8. **VENV AWARENESS**: For Python projects, assume `./.venv` exists. Use `./.venv/bin/python`
+9. **HIGH PORT RANGE**: Use ports 9000+ for any service verification
+10. **ISOLATION**: Never reference legacy `../source/` directory in commands
 
-## AGENT CAPABILITIES:
-The executor agent that follows this plan can:
-- Create, modify, and delete files
-- Run shell commands (npm, pip, cargo, etc.)
-- Read existing file contents
-- Install and remove dependencies
-- Run tests and build commands
-
-11. **Total Language Compliance**: Your plan MUST strictly use the file extensions and CLI flags associated with the target stack. (e.g., if target is TypeScript, ALL files in the plan MUST be `.ts` or `.tsx`, and you MUST include the `--typescript` flag for any CLI tools like `fastify-cli`).
-12. **No Placeholders**: Never use "Simulate logic" or "placeholder" in your plan. The goal is a 100% functional rewrite.
-
-Generate detailed, actionable plans that the executor can follow step-by-step.
+Generate a comprehensive, foolproof blueprint using REAL, CURRENT information from your searches.
 OUTPUT ONLY VALID JSON. BEGIN WITH { AND END WITH }"""
+
 
 
 async def generate_plan(
@@ -164,10 +155,8 @@ async def generate_plan(
             import traceback
             traceback.print_exc()
 
-    from app.integrations.gemini import generate
-    
-    # Build the planning prompt
-    prompt = build_planning_prompt(job, analysis_data)
+    # Build the research-driven planning prompt
+    prompt = build_research_driven_prompt(job, analysis_data)
     
     # Update job status to PLANNING
     job.status = "PLANNING"
@@ -178,30 +167,47 @@ async def generate_plan(
     await emit("status_changed", {"status": "PLANNING"})
     
     # Emit loading event so frontend knows plan is being generated
-    await emit("plan_generating", {"message": "Generating migration plan..."})
+    await emit("plan_generating", {"message": "Generating migration plan with research..."})
     
     start_time = datetime.utcnow()
-    print(f"[{start_time.isoformat()}] 🧠 Generating plan for job {job.id} (non-blocking)...")
+    print(f"[{start_time.isoformat()}] 🧠 Generating plan for job {job.id} with grounding...")
     
     try:
-        # Generate plan in one shot (no streaming) to ensure valid JSON
-        # Using run_in_executor wrapper in gemini.py to prevent blocking event loop
-        full_plan = await generate(
-            prompt, 
-            system_instruction=PLANNER_SYSTEM_PROMPT
+        # Generate plan with grounding enabled
+        result = await generate_with_grounding(
+            prompt=prompt,
+            system_instruction=RESEARCH_DRIVEN_PLANNER_PROMPT
         )
         
+        plan_text = result['text']
+        grounding_metadata = result['grounding_metadata']
+        
         duration = (datetime.utcnow() - start_time).total_seconds()
-        print(f"[{datetime.utcnow().isoformat()}] ✅ Plan generated in {duration:.2f}s: {len(full_plan) if full_plan else 0} chars")
+        print(f"[{datetime.utcnow().isoformat()}] ✅ Plan generated in {duration:.2f}s: {len(plan_text) if plan_text else 0} chars")
+        print(f"📊 Research: {len(grounding_metadata.get('search_queries', []))} searches, {len(grounding_metadata.get('sources', []))} sources")
         
         # Clean up JSON if wrapped in code blocks
-        if isinstance(full_plan, str):
-            full_plan = full_plan.strip()
-            if full_plan.startswith("```"):
-                full_plan = full_plan.split("\n", 1)[1] if "\n" in full_plan else full_plan
-            if full_plan.endswith("```"):
-                full_plan = full_plan.rsplit("\n", 1)[0] if "\n" in full_plan else full_plan
-            full_plan = full_plan.strip()
+        if isinstance(plan_text, str):
+            plan_text = plan_text.strip()
+            if plan_text.startswith("```"):
+                plan_text = plan_text.split("\n", 1)[1] if "\n" in plan_text else plan_text
+            if plan_text.endswith("```"):
+                plan_text = plan_text.rsplit("\n", 1)[0] if "\n" in plan_text else plan_text
+            plan_text = plan_text.strip()
+        
+        # Parse plan JSON and inject research metadata
+        import json
+        try:
+            plan_json = json.loads(plan_text)
+            plan_json['research_summary'] = {
+                'sources_consulted': grounding_metadata.get('sources', []),
+                'search_queries': grounding_metadata.get('search_queries', [])
+            }
+            full_plan = json.dumps(plan_json, indent=2)
+        except json.JSONDecodeError:
+            # If JSON parsing fails, use the raw text
+            print("⚠️  Failed to parse plan JSON, using raw text")
+            full_plan = plan_text
         
         # Emit the complete plan as a single chunk
         await emit("plan_chunk", {
@@ -242,52 +248,49 @@ async def generate_plan(
         raise
 
 
-def build_planning_prompt(job: Job, analysis_data: dict) -> str:
-    """Build the prompt for the planning agent."""
-    
-    # Get workspace info
-    workspace_path = job.workspace_path
+def build_research_driven_prompt(job: Job, analysis_data: dict) -> str:
+    """Build prompt that encourages the model to search for stack-specific information."""
     
     # Extract analysis info
     detected_stack = analysis_data.get("detected_stack", "Unknown")
-    complexity_score = analysis_data.get("complexity_score", 50)
-    insight_detail = analysis_data.get("insight_detail", "No detailed analysis available.")
-    file_count = analysis_data.get("file_count", "unknown")
     file_tree = analysis_data.get("file_tree", "No tree available.")
     
     prompt = f"""# Migration Request
 
-## 📦 Repository Information
-| Property | Value |
-|----------|-------|
-| **Repository** | `{job.repo_name}` |
-| **Current Stack** | {detected_stack} |
-| **Target Stack** | **{job.target_stack}** |
-| **Complexity Score** | {complexity_score}/100 |
-| **Workspace** | `{workspace_path}` |
-| **Files Analyzed** | {file_count} |
+## Source & Target
+- **Current Stack**: {detected_stack}
+- **Target Stack**: {job.target_stack}
 
-## 📂 Actual Project Structure (Legacy)
+## Your Task
+Create a migration plan from {detected_stack} to {job.target_stack}.
+
+## IMPORTANT: Research First
+Before creating the plan, you MUST search for:
+1. "migrate {detected_stack} to {job.target_stack} best practices"
+2. "{job.target_stack} official documentation setup guide"
+3. "{job.target_stack} project structure conventions"
+4. "{job.target_stack} package manager" (to discover npm/pnpm/pip/poetry/etc.)
+5. "{job.target_stack} testing framework" (to discover jest/pytest/vitest/etc.)
+6. "{job.target_stack} build tool" (to discover vite/webpack/rollup/etc.)
+
+Use the information from these searches to create an accurate, up-to-date migration plan.
+
+## Project Structure (Legacy)
 ```
 {file_tree}
 ```
 
-## 🔍 Analysis Insight
-{insight_detail if insight_detail else "Standard migration - no special considerations."}
+## Guidelines
+1. **Reference REAL Files**: Use the actual file names from the project structure above
+2. **Logic Parity**: Ensure every legacy file has a corresponding migration task
+3. **No Placeholders**: Create a 100% functional rewrite plan, not placeholders
+4. **Use Discovered Tools**: Use the package manager, test framework, and build tool you discovered from your searches
 
-## 🎯 Your Task
-Transform this codebase from **{detected_stack}** → **{job.target_stack}**
-
-Generate a structured JSON migration plan. 
-
-### IMPORTANT GUIDELINES:
-1. **Reference REAL Files**: Look at the "Actual Project Structure" above. Your plan MUST reference the existing file names and paths. DO NOT guess or hallucinate file names.
-2. **Logic Parity**: Ensure every legacy logic file (logic, models, utils) has a corresponding migration task. Do not just migrate the server shell.
-3. **No Placeholders**: Never use "Simulate logic" or "placeholder" in your plan. The goal is a 100% functional rewrite.
-
-CRITICAL: Output ONLY valid JSON. No markdown. No code blocks. Start with {{ and end with }}"""
+Generate a structured JSON migration plan using REAL commands from your research.
+Output ONLY valid JSON. Start with {{ and end with }}"""
     
     return prompt
+
 
 
 async def start_planning(job_id: str, analysis_data: dict, session: AsyncSession):

@@ -11,7 +11,7 @@ export function Terminal({ logs }: TerminalProps) {
 
     // Auto-scroll to bottom
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        bottomRef.current?.scrollIntoView({ behavior: "instant" as any });
     }, [logs]);
 
     return (

@@ -215,13 +215,27 @@ export const jobs = {
         });
     },
 
-    /**
-     * Reject the plan and request a new one
-     */
     async reject(jobId: string, feedback?: string): Promise<{ status: string; job_id: string; message: string }> {
         return apiFetch(`/api/jobs/${jobId}/reject`, {
             method: 'POST',
             body: JSON.stringify({ feedback }),
+        });
+    },
+
+    /**
+     * Get the audit certification report
+     */
+    async getAuditReport(jobId: string): Promise<any> {
+        return apiFetch(`/api/jobs/${jobId}/audit/report`);
+    },
+
+    /**
+     * Submit the certified PR
+     */
+    async submitAuditPR(jobId: string, repoUrl: string, branchName: string): Promise<{ success: boolean; pr_url: string }> {
+        return apiFetch(`/api/jobs/${jobId}/audit/pr`, {
+            method: 'POST',
+            body: JSON.stringify({ repo_url: repoUrl, branch_name: branchName }),
         });
     },
 };

@@ -28,7 +28,7 @@ def get_client() -> genai.Client:
 
 
 async def generate(
-    prompt: str,
+    prompt: Any,
     response_schema: Optional[Type[BaseModel]] = None,
     system_instruction: Optional[str] = None,
 ) -> Any:
@@ -102,8 +102,97 @@ async def generate(
     return response.text
 
 
+async def generate_with_grounding(
+    prompt: Any,
+    system_instruction: Optional[str] = None,
+) -> dict:
+    """
+    Generate content with Google Search grounding enabled.
+    
+    This enables the model to search the web for real-time information
+    and cite sources in its response.
+    
+    Args:
+        prompt: The user prompt
+        system_instruction: Optional system prompt
+    
+    Returns:
+        dict with:
+        - 'text': Generated content
+        - 'grounding_metadata': Dict with 'sources' and 'search_queries'
+    """
+    client = get_client()
+    
+    # Build config with grounding enabled
+    config = types.GenerateContentConfig(
+        temperature=settings.gemini_temperature,
+        max_output_tokens=settings.gemini_max_tokens,
+        tools=[types.Tool(google_search=types.GoogleSearch())],  # Enable Google Search
+    )
+    
+    # Add system instruction if provided
+    if system_instruction:
+        config.system_instruction = system_instruction
+    
+    # Run blocking call in executor
+    import asyncio
+    from functools import partial
+    
+    loop = asyncio.get_running_loop()
+    
+    # Use partial to pass arguments to the synchronous function
+    generate_func = partial(
+        client.models.generate_content,
+        model=settings.gemini_model,
+        contents=prompt,
+        config=config,
+    )
+    
+    print(f"🔍 Calling Gemini API with grounding (model={settings.gemini_model})...")
+    
+    try:
+        response = await loop.run_in_executor(None, generate_func)
+    except Exception as e:
+        print(f"❌ Gemini API Error: {e}")
+        raise
+        
+    print(f"✅ Gemini API Response received ({len(response.text) if response.text else 0} chars)")
+    
+    # Extract grounding metadata
+    grounding_metadata = {
+        'sources': [],
+        'search_queries': []
+    }
+    
+    if hasattr(response, 'grounding_metadata') and response.grounding_metadata:
+        metadata = response.grounding_metadata
+        
+        # Extract search queries
+        if hasattr(metadata, 'web_search_queries') and metadata.web_search_queries:
+            grounding_metadata['search_queries'] = list(metadata.web_search_queries)
+            print(f"📊 Grounding: {len(grounding_metadata['search_queries'])} search queries executed")
+        
+        # Extract source citations
+        if hasattr(metadata, 'grounding_chunks') and metadata.grounding_chunks:
+            for chunk in metadata.grounding_chunks:
+                if hasattr(chunk, 'web') and chunk.web:
+                    grounding_metadata['sources'].append({
+                        'uri': chunk.web.uri if hasattr(chunk.web, 'uri') else '',
+                        'title': chunk.web.title if hasattr(chunk.web, 'title') else ''
+                    })
+            print(f"📚 Grounding: {len(grounding_metadata['sources'])} sources consulted")
+    else:
+        print("⚠️  No grounding metadata found in response")
+    
+    return {
+        'text': response.text,
+        'grounding_metadata': grounding_metadata
+    }
+
+
+
 async def stream(
-    prompt: str,
+    prompt: Any,
     system_instruction: Optional[str] = None,
 ):
     """

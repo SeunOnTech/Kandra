@@ -112,20 +112,32 @@ class WriteFileTool(BaseTool):
         
     async def execute(self, path: str, content: str) -> ToolResult:
         try:
-            # 1. Extension Check (Language Lock)
+            # 1. Extension Check (Language Lock - RELAXED)
             if self.allowed_extensions:
                 ext = os.path.splitext(path)[1].lower()
+                common_langs = [
+                    ".js", ".jsx", ".ts", ".tsx", ".py", ".go", ".rs", ".c", ".cpp", ".java", 
+                    ".kt", ".rb", ".php", ".cs", ".swift", ".m", ".h", ".sh", ".sql"
+                ]
                 meta_allow = [
                     ".json", ".md", ".yml", ".yaml", ".txt", ".gitignore", ".env", 
-                    ".lock", "license", ".editorconfig", "tsconfig.json", "package.json"
+                    ".lock", "license", ".editorconfig", "tsconfig.json", "package.json", "pom.xml", "web.xml"
                 ]
-                is_code = ext in [".js", ".jsx", ".ts", ".tsx", ".py", ".go", ".rs", ".c", ".cpp", ".java"]
 
-                if is_code and ext not in self.allowed_extensions and ext not in meta_allow:
-                    return ToolResult(
-                        output="", 
-                        error=f"CRITICAL: Language Lock Violation! File extension '{ext}' is forbidden in this stack. Expected: {', '.join(self.allowed_extensions)}. Change the extension to match the target stack."
-                    )
+                # If it's a known language but not in the strict 'target' stack, we allow it but log a warning
+                if ext in common_langs and ext not in self.allowed_extensions:
+                    print(f"⚠️ [Language Lock] Information: Writing legacy or auxiliary '{ext}' file. Target stack expects '{self.allowed_extensions}'.")
+                
+                # Only block truly weird/potentially dangerous files if you want, 
+                # but for this engine, we should be permissive.
+                # Just keeping the isolation check below but removing the 'CRITICAL' return here.
+
+            # 2. Reference Check (Source Isolation)
+            if "../source" in content:
+                return ToolResult(
+                    output="",
+                    error="⚠️ PERMISSION DENIED: Source Leak! You are attempting to include a reference to '../source/' in your code or config. The target must be 100% isolated and self-contained. Rewrite the logic locally in the target directory."
+                )
 
             full_path = os.path.abspath(os.path.join(self.workspace_path, path))
             

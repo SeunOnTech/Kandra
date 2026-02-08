@@ -3,6 +3,7 @@
 import os
 import shutil
 import subprocess
+import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
@@ -17,11 +18,13 @@ class CloneService:
         self.base_path = Path(settings.workspace_base_path).resolve()
         self.base_path.mkdir(parents=True, exist_ok=True)
     
-    def get_workspace_path(self, repo_name: str) -> Path:
-        """Get the workspace path for a repository."""
+    def get_workspace_path(self, repo_name: str, session_id: str = None) -> Path:
+        """Get a unique workspace path for a repository session."""
         # Sanitize repo name
         safe_name = repo_name.replace("/", "_").replace("\\", "_")
-        return self.base_path / safe_name
+        # Always generate a unique ID for each session
+        unique_id = session_id or uuid.uuid4().hex[:8]
+        return self.base_path / f"{safe_name}_{unique_id}"
     
     def is_recently_cloned(self, workspace_path: Path, max_age_hours: int = 1) -> bool:
         """Check if workspace was cloned recently (within max_age_hours)."""
@@ -63,25 +66,7 @@ class CloneService:
         
         # Ensure all sub-folders exist
         for p in [source_path, target_path, metadata_path, reports_path]:
-            # Always WIPE target, metadata, and reports for a fresh start
-            if p != source_path and p.exists():
-                shutil.rmtree(p)
             p.mkdir(parents=True, exist_ok=True)
-            
-        # Check if already cloned and fresh (in the source subfolder)
-        if not force and self.is_recently_cloned(source_path):
-            return {
-                "workspace_path": str(workspace_path),
-                "source_path": str(source_path),
-                "target_path": str(target_path),
-                "cloned": False,
-                "message": f"Using cached clone from {source_path}. Cleared target and metadata.",
-            }
-        
-        # Remove old legacy source if it exists to ensure clean clone
-        if source_path.exists():
-            shutil.rmtree(source_path)
-        source_path.mkdir(parents=True, exist_ok=True)
         
         # Clone the repository into source/
         try:

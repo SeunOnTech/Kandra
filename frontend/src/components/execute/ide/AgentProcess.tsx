@@ -1,14 +1,18 @@
-import React, { useRef, useEffect } from "react";
-import { Brain, Terminal as TerminalIcon, FileText, Search, Play, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import React, { useRef, useEffect, useMemo, useState } from "react";
+import { Brain, Terminal as TerminalIcon, FileText, Search, Play, CheckCircle2, AlertCircle, Loader2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatActivity, formatActivityDetails, formatDuration, formatTimeAgo, ActivityUpdate, StuckWarning } from "@/lib/activityHelpers";
 
 interface AgentProcessProps {
     logs: any[]; // Supports generic mixed events for now
+    currentActivity?: ActivityUpdate | null;
+    stuckWarning?: StuckWarning | null;
 }
 
-export function AgentProcess({ logs }: AgentProcessProps) {
+export function AgentProcess({ logs, currentActivity, stuckWarning }: AgentProcessProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [activityDuration, setActivityDuration] = useState(0);
 
     // Auto-scroll logic
     useEffect(() => {
@@ -17,14 +21,37 @@ export function AgentProcess({ logs }: AgentProcessProps) {
         }
     }, [logs]);
 
+    // Update activity duration every second
+    useEffect(() => {
+        if (!currentActivity) return;
+
+        const interval = setInterval(() => {
+            const duration = Date.now() - new Date(currentActivity.started_at).getTime();
+            setActivityDuration(duration);
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [currentActivity]);
+
     // Filters for "Processor" events: Thoughts and Tool Calls
-    const processEvents = logs.filter(l =>
-        l.type === "agent_thought" ||
-        l.type === "tool_call" ||
-        l.type === "phase_started" ||
-        l.type === "phase_completed" ||
-        l.type === "phase_error"
-    );
+    // Deduplicate by ID if available, otherwise by content/type/timestamp
+    const processEvents = useMemo(() => {
+        const seenIds = new Set();
+        return logs
+            .filter(l =>
+                l.type === "agent_thought" ||
+                l.type === "tool_call" ||
+                l.type === "phase_started" ||
+                l.type === "phase_completed" ||
+                l.type === "phase_error"
+            )
+            .filter(l => {
+                const id = l.id || `${l.type}-${l.timestamp}-${JSON.stringify(l.payload)}`;
+                if (seenIds.has(id)) return false;
+                seenIds.add(id);
+                return true;
+            });
+    }, [logs]);
 
     return (
         <div className="flex flex-col h-full bg-white border-l border-slate-200">
@@ -44,6 +71,65 @@ export function AgentProcess({ logs }: AgentProcessProps) {
                     Live
                 </div>
             </div>
+
+            {/* Current Activity Status */}
+            {currentActivity && (
+                <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
+                    <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                        <div className="flex-1">
+                            <div className="text-sm font-medium text-blue-900">
+                                {formatActivity(currentActivity.activity)}
+                            </div>
+                            {formatActivityDetails(currentActivity.details) && (
+                                <div className="text-xs text-blue-600 mt-0.5">
+                                    {formatActivityDetails(currentActivity.details)}
+                                </div>
+                            )}
+                            <div className="text-xs text-blue-500 mt-1">
+                                Duration: {formatDuration(activityDuration)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Stuck Warning */}
+            {stuckWarning && (
+                <div className="px-4 py-3 bg-amber-50 border-b border-amber-200">
+                    <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-amber-900">
+                                Agent appears stuck
+                            </div>
+                            <div className="text-xs text-amber-700 mt-1 space-y-1">
+                                <div>
+                                    <span className="font-medium">Activity:</span> {formatActivity(stuckWarning.activity)}
+                                </div>
+                                <div>
+                                    <span className="font-medium">Duration:</span> {stuckWarning.duration_seconds}s
+                                </div>
+                                {stuckWarning.last_successful_action && (
+                                    <div>
+                                        <span className="font-medium">Last success:</span> {stuckWarning.last_successful_action.tool} ({formatTimeAgo(stuckWarning.last_successful_action.timestamp)})
+                                    </div>
+                                )}
+                            </div>
+                            <div className="mt-2 p-2 bg-amber-100 rounded text-xs space-y-1">
+                                <div>
+                                    <span className="font-medium text-amber-900">Likely cause:</span>{' '}
+                                    <span className="text-amber-800">{stuckWarning.diagnostics.likely_cause}</span>
+                                </div>
+                                <div>
+                                    <span className="font-medium text-amber-900">Suggestion:</span>{' '}
+                                    <span className="text-amber-800">{stuckWarning.diagnostics.suggestion}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Timeline */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar" ref={scrollRef}>
@@ -80,7 +166,7 @@ export function AgentProcess({ logs }: AgentProcessProps) {
 
                                 {event.type === "phase_started" && (
                                     <div className="bg-blue-50 text-blue-800 p-3 rounded-xl rounded-tl-none text-xs font-medium border border-blue-100 shadow-sm">
-                                        🚀 Starting Phase: <span className="font-bold">{event.payload?.phase}</span>
+                                        🚀 Starting Phase: <span className="font-bold">{event.payload?.title}</span>
                                     </div>
                                 )}
 

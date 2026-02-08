@@ -12,8 +12,12 @@ from app.db.models import Job, JobEvent
 from app.integrations.redis_client import get_redis, publish_event
 from app.services.exporter import ExporterService
 from fastapi.responses import FileResponse
+import os
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
+
+# Global Lock to ensure serial execution in resource-constrained (1GB RAM) environments
+execution_lock = asyncio.Lock()
 
 
 # === Request/Response Models ===
@@ -282,7 +286,10 @@ async def approve_plan(
         print(f"❌ Failed to parse plan JSON: {e}")
         raise HTTPException(status_code=500, detail="Stored plan is invalid")
 
-    # Update status to EXECUTING
+    # Update status to EXECUTING with atomic-like check
+    if job.status == "EXECUTING":
+        return {"status": "already_executing", "job_id": job_id}
+        
     job.status = "EXECUTING"
     job.updated_at = datetime.utcnow()
     await session.commit()
@@ -310,9 +317,12 @@ async def approve_plan(
                 job_result = await new_session.execute(select(Job).where(Job.id == job_id))
                 active_job = job_result.scalar_one()
                 
-                agent = ExecutorAgent(active_job, new_session)
-                print(f"🚀 Launching Executor Agent for job {job_id}...")
-                await agent.execute_plan(plan_data)
+                # Serial Execution Lock: Wait for other jobs to finish
+                print(f"⏳ [Lock] Job {job_id} is waiting for the execution lock...")
+                async with execution_lock:
+                    print(f"🚀 [Lock] Job {job_id} acquired lock. Launching Executor Agent...")
+                    agent = ExecutorAgent(active_job, new_session)
+                    await agent.execute_plan(plan_data)
                 
             except Exception as e:
                 print(f"❌ Execution failed: {e}")
@@ -392,94 +402,77 @@ async def reject_plan(
         "message": "Plan rejected. Ready for new planning request."
     }
 
-# === Export Endpoints ===
+# === Audit & Delivery Endpoints ===
 
-@router.post("/{job_id}/audit/run")
-async def run_audit_endpoint(
+class AuditPRRequest(BaseModel):
+    repo_url: str
+    branch_name: str
+    github_token: Optional[str] = None
+
+@router.get("/{job_id}/audit/report")
+async def get_audit_report(
     job_id: str,
     session: AsyncSession = Depends(get_session),
 ):
-    """Trigger the structured 'Logic DNA' audit."""
-    from app.agents.verifier import VerifierAgent
-    
-    result = await session.execute(select(Job).where(Job.id == job_id))
-    job = result.scalar_one_or_none()
-    
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-        
-    # Start audit in background
-    async def task():
-        from app.db.database import async_session_context
-        async with async_session_context() as new_session:
-            verifier = VerifierAgent(job, new_session)
-            await verifier.run_audit()
-            
-    import asyncio
-    asyncio.create_task(task())
-    
-    return {"status": "audit_started"}
-
-@router.get("/{job_id}/export/zip")
-async def export_job_zip(
-    job_id: str,
-    session: AsyncSession = Depends(get_session),
-):
-    """Generate and return a ZIP archive of the migrated code."""
-    result = await session.execute(select(Job).where(Job.id == job_id))
-    job = result.scalar_one_or_none()
-    
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-        
-    exporter = ExporterService(job)
-    zip_path = exporter.generate_zip()
-    
-    return FileResponse(
-        path=zip_path,
-        filename=f"kandra_migration_{job_id}.zip",
-        media_type="application/zip"
-    )
-
-@router.post("/{job_id}/export/pr")
-async def export_job_pr(
-    job_id: str,
-    request: Request, # Need this to get session for GitHub token
-    session: AsyncSession = Depends(get_session),
-):
-    """Push migrated code to GitHub and create a Pull Request."""
-    from app.api.github import _get_session
+    """Generate and return the certification audit report."""
+    from app.agents.audit import AuditAgent
     
     # 1. Verify Job
     result = await session.execute(select(Job).where(Job.id == job_id))
     job = result.scalar_one_or_none()
+    
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+        
+    # 2. Run Audit (In real app, we might cache this)
+    try:
+        agent = AuditAgent(job)
+        report = await agent.generate_audit_report()
+        return report
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{job_id}/audit/pr")
+async def submit_audit_pr(
+    job_id: str,
+    body: AuditPRRequest,
+    session: AsyncSession = Depends(get_session),
+):
+    """Submit the certified code as a Pull Request."""
+    from app.agents.audit import AuditAgent
     
-    # 2. Get GitHub Token from session
-    github_session = await _get_session(request)
-    token = github_session.get("github_token")
+    # 1. Verify Job
+    result = await session.execute(select(Job).where(Job.id == job_id))
+    job = result.scalar_one_or_none()
+    
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    # 2. Get Token (From body or env)
+    token = body.github_token or os.environ.get("GITHUB_TOKEN")
     
     if not token:
-        raise HTTPException(status_code=401, detail="GitHub account not connected")
+        raise HTTPException(status_code=400, detail="No GitHub token provided. Please provide one in the request or set GITHUB_TOKEN env var.")
         
-    # 3. Trigger PR Flow
+    # 3. Submit PR
     try:
-        exporter = ExporterService(job)
-        pr_data = await exporter.create_github_pr(token)
+        agent = AuditAgent(job)
+        pr_url = await agent.submit_pull_request(body.repo_url, body.branch_name, token)
         
         # Publish event
         await publish_event(f"job:{job_id}", {
             "type": "pr_created",
             "job_id": job_id,
-            "payload": {"pr_url": pr_data.get("html_url")}
+            "payload": {"pr_url": pr_url}
         })
         
-        return {
-            "success": True,
-            "pr_url": pr_data.get("html_url")
-        }
+        return {"success": True, "pr_url": pr_url}
+        
     except Exception as e:
-        print(f"❌ PR Creation Failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to create PR: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 

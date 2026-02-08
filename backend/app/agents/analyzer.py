@@ -65,6 +65,7 @@ async def analyze_codebase(
 ) -> dict:
     """
     Analyze a codebase and generate stack migration recommendations.
+    Uses grounding to validate stack detection and provide accurate recommendations.
     
     Args:
         tree: Directory tree structure
@@ -80,6 +81,12 @@ async def analyze_codebase(
         for f in files[:40]
     ])
     
+    # Step 1: Quick heuristic detection
+    detected_stack = _detect_stack_heuristic(files, tree)
+    
+    # Step 2: Confirm with grounding
+    confirmed_stack = await _confirm_stack_with_grounding(detected_stack, files[:5])
+    
     # Build prompt
     prompt = f"""Analyze this legacy codebase: {repo_name}
 
@@ -91,6 +98,9 @@ async def analyze_codebase(
 ## Code
 {file_context}
 
+## Detected Stack (confirmed via web search)
+{confirmed_stack}
+
 ## Your Task
 Analyze the logic deeply. 
 - Identify ALL core business logic files (models, controllers, math, utility logic).
@@ -99,7 +109,7 @@ Analyze the logic deeply.
 
 Return JSON with:
 
-- detected_stack: Current tech stack (e.g., "Node.js with raw HTTP server", "Express.js + MongoDB")
+- detected_stack: Use the confirmed stack above: "{confirmed_stack}"
 - complexity_score: 0-100 (how hard to migrate)
 - complexity_reason: One sentence why
 - insight_title: The biggest modernization opportunity (catchy, specific)
@@ -124,4 +134,87 @@ Remember: These are FULL STACK MIGRATIONS that Kandra will execute autonomously.
         analysis["file_tree"] = tree
     
     return analysis
+
+
+def _detect_stack_heuristic(files: list[dict], tree: str) -> str:
+    """Fast heuristic stack detection based on file patterns."""
+    # Check for common framework indicators
+    if "package.json" in tree:
+        # Node.js project
+        for f in files:
+            if f['path'] == 'package.json':
+                content = f['content'].lower()
+                if 'express' in content:
+                    return "Express.js"
+                if 'fastify' in content:
+                    return "Fastify"
+                if 'next' in content:
+                    return "Next.js"
+                if 'react' in content:
+                    return "React"
+        return "Node.js"
+    
+    if "requirements.txt" in tree or "pyproject.toml" in tree:
+        # Python project
+        for f in files:
+            if f['path'] in ['requirements.txt', 'pyproject.toml']:
+                content = f['content'].lower()
+                if 'django' in content:
+                    return "Django"
+                if 'flask' in content:
+                    return "Flask"
+                if 'fastapi' in content:
+                    return "FastAPI"
+        return "Python"
+    
+    if "Gemfile" in tree:
+        return "Ruby on Rails"
+    
+    if "go.mod" in tree:
+        return "Go"
+    
+    if "Cargo.toml" in tree:
+        return "Rust"
+    
+    return "Unknown"
+
+
+async def _confirm_stack_with_grounding(initial_guess: str, sample_files: list[dict]) -> str:
+    """Use grounding to confirm and refine stack detection."""
+    from app.integrations.gemini import generate_with_grounding
+    
+    # Build evidence from sample files
+    evidence = "\n".join([
+        f"File: {f['path']}\nContent preview: {f['content'][:200]}"
+        for f in sample_files[:3]
+    ])
+    
+    prompt = f"""Analyze this codebase and confirm the exact technology stack.
+
+Initial detection: {initial_guess}
+
+Evidence from codebase:
+{evidence}
+
+Search for information about this stack and confirm:
+1. The exact framework name and version (if detectable)
+2. The primary language
+3. Any notable dependencies that indicate the stack
+
+Provide a concise, accurate stack description (e.g., "Express.js with MongoDB", "Flask with SQLAlchemy", "Next.js 14 with TypeScript")."""
+    
+    try:
+        result = await generate_with_grounding(
+            prompt=prompt,
+            system_instruction="You are a stack detection expert. Use web search to identify frameworks accurately based on file patterns and dependencies."
+        )
+        
+        confirmed = result['text'].strip()
+        print(f"🔍 [Analyzer] Stack confirmed via grounding: {confirmed}")
+        return confirmed
+        
+    except Exception as e:
+        print(f"⚠️ [Analyzer] Grounding failed, using heuristic: {e}")
+        return initial_guess
+
 
