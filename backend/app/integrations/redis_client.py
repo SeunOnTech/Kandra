@@ -29,6 +29,9 @@ class MockRedis:
     async def set(self, key, value):
         self.data[key] = value
 
+    async def ping(self):
+        return True
+
 _mock_client = MockRedis()
 
 from app.integrations.event_bus import bus
