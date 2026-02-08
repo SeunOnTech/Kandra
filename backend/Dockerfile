@@ -1,16 +1,16 @@
 FROM python:3.9-slim-bookworm
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Ultra-Lean dependencies for 512MB Droplet
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
     unzip \
     build-essential \
-    default-jdk \
+    openjdk-17-jre-headless \
     maven \
     golang-go \
-    ruby-full \
-    && rm -rf /var/lib/apt/lists/*
+    ruby \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
