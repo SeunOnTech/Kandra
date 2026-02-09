@@ -46,21 +46,21 @@ async def analyze_repository(body: AnalyzeRequest):
     
     Returns migration recommendations based on codebase analysis.
     """
-    print(f"📥 Analyze request: clone_url={body.clone_url}, repo_name={body.repo_name}")
+    print(f"Analyze request: clone_url={body.clone_url}, repo_name={body.repo_name}")
     
     try:
         # Step 1: Clone (or use cache)
-        print("📦 Step 1: Cloning...")
+        print("Step 1: Cloning...")
         clone_result = await clone_service.clone(
             clone_url=body.clone_url,
             repo_name=body.repo_name,
         )
-        print(f"✅ Cloned: {clone_result}")
+        print(f"Cloned: {clone_result}")
         
         # Step 2: Scan files
-        print("🔍 Step 2: Scanning files...")
+        print("Step 2: Scanning files...")
         scan_result = scanner.scan(clone_result["source_path"])
-        print(f"✅ Scanned: {scan_result['stats']}")
+        print(f"Scanned: {scan_result['stats']}")
         
         if not scan_result["files"]:
             raise HTTPException(
@@ -69,13 +69,13 @@ async def analyze_repository(body: AnalyzeRequest):
             )
         
         # Step 3: Analyze with Gemini
-        print("🧠 Step 3: Analyzing with Gemini...")
+        print("Step 3: Analyzing with Gemini...")
         analysis = await analyze_codebase(
             tree=scan_result["tree"],
             files=scan_result["files"],
             repo_name=body.repo_name,
         )
-        print(f"✅ Analysis complete: {analysis.get('detected_stack')}")
+        print(f"Analysis complete: {analysis.get('detected_stack')}")
         
         # Build response
         return AnalyzeResponse(
@@ -95,7 +95,7 @@ async def analyze_repository(body: AnalyzeRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Analysis error: {str(e)}")
+        print(f"Analysis error: {str(e)}")
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 

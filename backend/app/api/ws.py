@@ -78,7 +78,7 @@ async def job_stream(websocket: WebSocket, job_id: str):
             from app.db.models import JobEvent
             from sqlalchemy import select
             
-            print(f"📜 [WS] Replaying history for job={job_id}...")
+            print(f"[WS] Replaying history for job={job_id}...")
             
             async with async_session_context() as session:
                 # Fetch all events ordered by time
@@ -89,7 +89,7 @@ async def job_stream(websocket: WebSocket, job_id: str):
                 )
                 history = result.scalars().all()
                 
-                print(f"📜 [WS] Found {len(history)} past events.")
+                print(f"[WS] Found {len(history)} past events.")
                 
                 for event in history:
                     # Construct message matching the Redis pub/sub format used by frontend
@@ -101,10 +101,10 @@ async def job_stream(websocket: WebSocket, job_id: str):
                     }
                     await websocket.send_json(msg)
                     
-            print(f"✅ [WS] History replay complete.")
+            print(f"[WS] History replay complete.")
             
         except Exception as e:
-             print(f"❌ [WS] History replay failed: {e}")
+             print(f"[WS] History replay failed: {e}")
         
         # Create Subscribe task
         async def event_listener():
@@ -113,14 +113,14 @@ async def job_stream(websocket: WebSocket, job_id: str):
             from app.integrations.event_bus import bus
             
             try:
-                print(f"📡 Starting event listener for job={job_id}")
+                print(f"Starting event listener for job={job_id}")
                 async for data in bus.subscribe(f"job:{job_id}"):
-                    print(f"📨 event for {job_id}: {data.get('type', 'unknown')}")
+                    print(f"event for {job_id}: {data.get('type', 'unknown')}")
                     await manager.broadcast(job_id, data)
             except asyncio.CancelledError:
-                print(f"🛑 listener cancelled for job={job_id}")
+                print(f"listener cancelled for job={job_id}")
             except Exception as e:
-                print(f"❌ listener error for {job_id}: {e}")
+                print(f"listener error for {job_id}: {e}")
         
         # Start listener task
         listener_task = asyncio.create_task(event_listener())
@@ -148,14 +148,14 @@ async def job_stream(websocket: WebSocket, job_id: str):
                 try:
                     await websocket.send_json({"type": "heartbeat"})
                 except Exception as e:
-                    print(f"💔 Failed to send heartbeat: {e}")
+                    print(f"Failed to send heartbeat: {e}")
                     break
                     
     except WebSocketDisconnect:
         print(f"🔌 WebSocket disconnected: job={job_id}")
     except Exception as e:
         # Log all exceptions for debugging
-        print(f"❌ WebSocket error for {job_id}: {type(e).__name__}: {e}")
+        print(f"WebSocket error for {job_id}: {type(e).__name__}: {e}")
     finally:
         if listener_task:
             listener_task.cancel()
@@ -164,4 +164,4 @@ async def job_stream(websocket: WebSocket, job_id: str):
             except asyncio.CancelledError:
                 pass
         manager.disconnect(websocket, job_id)
-        print(f"🧹 Cleaned up WebSocket for job={job_id}")
+        print(f"Cleaned up WebSocket for job={job_id}")

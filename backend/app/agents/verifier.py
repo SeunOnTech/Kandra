@@ -123,7 +123,7 @@ Generate the structured DNA report.
             with open(self.report_path, "w") as f:
                 json.dump(report_data, f, indent=4)
                 
-            print(f"✅ [Verifier] Logic DNA report generated at {self.report_path}")
+            print(f"[Verifier] Logic DNA report generated at {self.report_path}")
             
             # 5. Emit detailed events
             await self._emit("audit_complete", report_data)
@@ -131,7 +131,7 @@ Generate the structured DNA report.
             return report_data
 
         except Exception as e:
-            error_msg = f"❌ [Verifier] DNA Audit failed: {e}"
+            error_msg = f"[Verifier] DNA Audit failed: {e}"
             print(error_msg)
             # Emit error event so frontend can catch it
             await self._emit("audit_error", {"error": str(e), "details": error_msg})

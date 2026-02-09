@@ -1,1 +1,1 @@
-"""Kandra V2 Backend."""
+"""Kandra Backend."""

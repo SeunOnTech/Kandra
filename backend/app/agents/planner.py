@@ -128,7 +128,7 @@ async def generate_plan(
         from app.integrations.event_bus import bus
         
         try:
-            print(f"👉 [Planner] Emitting {event_type}...")
+            print(f"[Planner] Emitting {event_type}...")
             # 1. Persist to DB
             event = JobEvent(
                 job_id=job.id,
@@ -147,10 +147,10 @@ async def generate_plan(
                 "payload": payload,
                 "timestamp": event.created_at.isoformat() if event.created_at else datetime.utcnow().isoformat()
             })
-            print(f"✅ [Planner] Emitted {event_type} (DB+Bus)")
+            print(f"[Planner] Emitted {event_type} (DB+Bus)")
             
         except Exception as e:
-            print(f"❌ [Planner] Failed to emit event {event_type}: {e}")
+            print(f"[Planner] Failed to emit event {event_type}: {e}")
             # Do NOT raise, so main logic can continue even if logging fails
             import traceback
             traceback.print_exc()
@@ -170,7 +170,7 @@ async def generate_plan(
     await emit("plan_generating", {"message": "Generating migration plan with research..."})
     
     start_time = datetime.utcnow()
-    print(f"[{start_time.isoformat()}] 🧠 Generating plan for job {job.id} with grounding...")
+    print(f"[{start_time.isoformat()}]  Generating plan for job {job.id} with grounding...")
     
     try:
         # Generate plan with grounding enabled
@@ -183,8 +183,8 @@ async def generate_plan(
         grounding_metadata = result['grounding_metadata']
         
         duration = (datetime.utcnow() - start_time).total_seconds()
-        print(f"[{datetime.utcnow().isoformat()}] ✅ Plan generated in {duration:.2f}s: {len(plan_text) if plan_text else 0} chars")
-        print(f"📊 Research: {len(grounding_metadata.get('search_queries', []))} searches, {len(grounding_metadata.get('sources', []))} sources")
+        print(f"[{datetime.utcnow().isoformat()}] Plan generated in {duration:.2f}s: {len(plan_text) if plan_text else 0} chars")
+        print(f" Research: {len(grounding_metadata.get('search_queries', []))} searches, {len(grounding_metadata.get('sources', []))} sources")
         
         # Clean up JSON if wrapped in code blocks
         if isinstance(plan_text, str):
@@ -206,7 +206,7 @@ async def generate_plan(
             full_plan = json.dumps(plan_json, indent=2)
         except json.JSONDecodeError:
             # If JSON parsing fails, use the raw text
-            print("⚠️  Failed to parse plan JSON, using raw text")
+            print("  Failed to parse plan JSON, using raw text")
             full_plan = plan_text
         
         # Emit the complete plan as a single chunk
@@ -231,11 +231,11 @@ async def generate_plan(
         # FINAL COMMIT: Ensure these last events are persisted!
         await session.commit()
         
-        print(f"✅ Plan generated: 1 chunks, {len(full_plan)} chars")
+        print(f"Plan generated: 1 chunks, {len(full_plan)} chars")
         return full_plan
         
     except Exception as e:
-        print(f"❌ Planning error: {e}")
+        print(f"Planning error: {e}")
         
         # Update job to failed
         job.status = "FAILED"

@@ -14,19 +14,19 @@ from app.integrations.redis_client import close_redis
 async def lifespan(app: FastAPI):
     """Application startup and shutdown events."""
     # Startup
-    print(f"🚀 Kandra V2 starting in {settings.app_env} mode")
+    print(f"Kandra starting in {settings.app_env} mode")
     await init_db()
-    print("✅ Database initialized")
+    print("Database initialized")
     yield
     # Shutdown
     await close_redis()
-    print("👋 Kandra V2 shutting down")
+    print("Kandra shutting down")
 
 
 app = FastAPI(
-    title="Kandra V2",
+    title="Kandra",
     description="Autonomous Code Migration Orchestrator",
-    version="2.0.0",
+    version="1.0.0",
     debug=settings.debug,
     lifespan=lifespan,
 )

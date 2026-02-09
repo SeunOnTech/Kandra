@@ -77,7 +77,7 @@ async def create_job(
     """Create a new migration job."""
     import traceback
     
-    print(f"📋 Create job request: repo={body.repo_name}, stack={body.target_stack}")
+    print(f"Create job request: repo={body.repo_name}, stack={body.target_stack}")
     print(f"   workspace_path={body.workspace_path}")
     
     try:
@@ -106,7 +106,7 @@ async def create_job(
         await session.commit()
         await session.refresh(job)
         
-        print(f"✅ Job created: {job.id}")
+        print(f"Job created: {job.id}")
         
         # Publish event to Redis for WebSocket
         await publish_event(f"job:{job.id}", {
@@ -118,7 +118,7 @@ async def create_job(
         return job
         
     except Exception as e:
-        print(f"❌ Job creation error: {str(e)}")
+        print(f"Job creation error: {str(e)}")
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Job creation failed: {str(e)}")
 
@@ -239,7 +239,7 @@ async def start_planning_endpoint(
             try:
                 await start_planning(job_id, body.analysis_data, new_session)
             except Exception as e:
-                print(f"❌ Planning task error: {e}")
+                print(f"Planning task error: {e}")
     
     asyncio.create_task(run_planning())
     
@@ -292,7 +292,7 @@ async def approve_plan(
         import json
         plan_data = json.loads(plan_event.payload["plan"])
     except Exception as e:
-        print(f"❌ Failed to parse plan JSON: {e}")
+        print(f"Failed to parse plan JSON: {e}")
         raise HTTPException(status_code=500, detail="Stored plan is invalid")
 
     # Update status to EXECUTING with atomic-like check
@@ -334,7 +334,7 @@ async def approve_plan(
                     await agent.execute_plan(plan_data)
                 
             except Exception as e:
-                print(f"❌ Execution failed: {e}")
+                print(f"Execution failed: {e}")
                 import traceback
                 traceback.print_exc()
                 

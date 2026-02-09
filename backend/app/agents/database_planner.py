@@ -49,7 +49,7 @@ Be specific and actionable. Include exact commands and tool names."""
         migration_plan = result['text']
         sources = result['grounding_metadata'].get('sources', [])
         
-        print(f"💡 [DB Planner] Found migration strategy from {len(sources)} sources")
+        print(f"[DB Planner] Found migration strategy from {len(sources)} sources")
         
         # Format response
         return {
@@ -67,7 +67,7 @@ Be specific and actionable. Include exact commands and tool names."""
         }
         
     except Exception as e:
-        print(f"⚠️ [DB Planner] Grounding failed: {e}")
+        print(f"[DB Planner] Grounding failed: {e}")
         return {
             "source_database": source_db,
             "target_database": target_db,

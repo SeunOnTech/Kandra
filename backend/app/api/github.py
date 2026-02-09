@@ -272,7 +272,7 @@ async def get_repos(
         )
         
         if repos_response.status_code != 200:
-            print(f"❌ GitHub API Error: {repos_response.status_code} - {repos_response.text}")
+            print(f"GitHub API Error: {repos_response.status_code} - {repos_response.text}")
             raise HTTPException(status_code=repos_response.status_code, detail="Failed to fetch repos")
         
         repos_data = repos_response.json()

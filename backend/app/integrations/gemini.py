@@ -75,15 +75,15 @@ async def generate(
         config=config,
     )
     
-    print(f"🤖 Calling Gemini API (model={settings.gemini_model})...")
+    print(f"Calling Gemini API (model={settings.gemini_model})...")
     
     try:
         response = await loop.run_in_executor(None, generate_func)
     except Exception as e:
-        print(f"❌ Gemini API Error: {e}")
+        print(f"Gemini API Error: {e}")
         raise
         
-    print(f"✅ Gemini API Response received ({len(response.text) if response.text else 0} chars)")
+    print(f"Gemini API Response received ({len(response.text) if response.text else 0} chars)")
     
     # Parse response
     if response_schema and settings.use_structured_output:
@@ -148,15 +148,15 @@ async def generate_with_grounding(
         config=config,
     )
     
-    print(f"🔍 Calling Gemini API with grounding (model={settings.gemini_model})...")
+    print(f"Calling Gemini API with grounding (model={settings.gemini_model})...")
     
     try:
         response = await loop.run_in_executor(None, generate_func)
     except Exception as e:
-        print(f"❌ Gemini API Error: {e}")
+        print(f"Gemini API Error: {e}")
         raise
         
-    print(f"✅ Gemini API Response received ({len(response.text) if response.text else 0} chars)")
+    print(f"Gemini API Response received ({len(response.text) if response.text else 0} chars)")
     
     # Extract grounding metadata
     grounding_metadata = {
@@ -180,9 +180,9 @@ async def generate_with_grounding(
                         'uri': chunk.web.uri if hasattr(chunk.web, 'uri') else '',
                         'title': chunk.web.title if hasattr(chunk.web, 'title') else ''
                     })
-            print(f"📚 Grounding: {len(grounding_metadata['sources'])} sources consulted")
+            print(f"Grounding: {len(grounding_metadata['sources'])} sources consulted")
     else:
-        print("⚠️  No grounding metadata found in response")
+        print("No grounding metadata found in response")
     
     return {
         'text': response.text,

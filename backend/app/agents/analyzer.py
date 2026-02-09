@@ -210,11 +210,11 @@ Provide a concise, accurate stack description (e.g., "Express.js with MongoDB", 
         )
         
         confirmed = result['text'].strip()
-        print(f"🔍 [Analyzer] Stack confirmed via grounding: {confirmed}")
+        print(f"[Analyzer] Stack confirmed via grounding: {confirmed}")
         return confirmed
         
     except Exception as e:
-        print(f"⚠️ [Analyzer] Grounding failed, using heuristic: {e}")
+        print(f"[Analyzer] Grounding failed, using heuristic: {e}")
         return initial_guess
 
 

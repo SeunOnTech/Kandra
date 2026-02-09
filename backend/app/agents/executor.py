@@ -218,7 +218,7 @@ class ExecutorAgent:
         """Wrap Ruby commands with bundler."""
         if cmd.startswith(("gem ", "rake ", "rails ")):
             new_cmd = f"bundle exec {cmd}"
-            print(f"💎 [Smart Wrapper] Rewriting '{cmd}' -> '{new_cmd}'")
+            print(f"[Smart Wrapper] Rewriting '{cmd}' -> '{new_cmd}'")
             return await original_run(new_cmd, **kwargs)
         
         # bundle commands pass through as-is
@@ -231,7 +231,7 @@ class ExecutorAgent:
         """Wrap Rust commands (mostly pass-through, cargo handles environment)."""
         # Cargo commands work as-is
         if cmd.startswith(("cargo ", "rustc ", "rustup ")):
-            print(f"🦀 [Smart Wrapper] Running Rust command: {cmd}")
+            print(f"[Smart Wrapper] Running Rust command: {cmd}")
             return await original_run(cmd, **kwargs)
         
     async def _wrap_java_command(self, cmd: str, original_run, **kwargs):
@@ -260,7 +260,7 @@ class ExecutorAgent:
         """Wrap Go commands (mostly pass-through, go modules handle environment)."""
         # Go commands work as-is
         if cmd.startswith(("go ", "gofmt ", "golint ")):
-            print(f"🐹 [Smart Wrapper] Running Go command: {cmd}")
+            print(f"[Smart Wrapper] Running Go command: {cmd}")
             return await original_run(cmd, **kwargs)
         
         return None
@@ -310,16 +310,16 @@ class ExecutorAgent:
         self.build_tool = transformation.get("build_tool")
         self.discovered_extensions = transformation.get("file_extensions", [])
         
-        print(f"🛠️  [Executor] Using discovered tools from plan:")
-        print(f"   📦 Package Manager: {self.package_manager}")
-        print(f"   🧪 Test Framework: {self.test_framework or 'Not specified'}")
-        print(f"   🔨 Build Tool: {self.build_tool or 'Not specified'}")
-        print(f"   📄 File Extensions: {self.discovered_extensions or 'Using fallback detection'}")
+        print(f"  [Executor] Using discovered tools from plan:")
+        print(f"   Package Manager: {self.package_manager}")
+        print(f"   Test Framework: {self.test_framework or 'Not specified'}")
+        print(f"   Build Tool: {self.build_tool or 'Not specified'}")
+        print(f"   File Extensions: {self.discovered_extensions or 'Using fallback detection'}")
         
         # Update allowed extensions if discovered
         if self.discovered_extensions:
             self.allowed_extensions = self.discovered_extensions
-            print(f"✅ [Executor] Language lock updated to: {self.allowed_extensions}")
+            print(f"[Executor] Language lock updated to: {self.allowed_extensions}")
         
         # Update smart wrappers with discovered tools
         self._setup_smart_wrappers()
@@ -333,7 +333,7 @@ class ExecutorAgent:
             print(f"⚡ [Executor] Found {len(phases)} phases in plan")
             
             if not phases:
-                print("⚠️ [Executor] Plan has no phases!")
+                print("[Executor] Plan has no phases!")
                 await self._emit("execution_error", {"error": "Plan has no phases"})
                 return
 
@@ -343,11 +343,11 @@ class ExecutorAgent:
                 print(f"⚡ [Executor] Phase {i+1} complete")
                 
             # All done
-            print("✅ [Executor] All phases completed successfully")
+            print("[Executor] All phases completed successfully")
             await self._emit("execution_complete", {"status": "success"})
             
         except Exception as e:
-            print(f"❌ [Executor] Transformation failed: {e}")
+            print(f"[Executor] Transformation failed: {e}")
             traceback.print_exc()
             await self._emit("execution_error", {"error": str(e)})
         
@@ -378,7 +378,7 @@ class ExecutorAgent:
             "tasks": tasks
         })
         
-        print(f"🚀 Starting Phase {phase_id}: {phase_title}")
+        print(f"Starting Phase {phase_id}: {phase_title}")
         
         # Track activity: starting phase
         await self._set_activity("starting_phase", {
@@ -407,10 +407,10 @@ class ExecutorAgent:
         # 1.5 Pre-Execution Verification (Testing Phases Only)
         phase_lower = phase_title.lower()
         if "test" in phase_lower or "verif" in phase_lower or "qa" in phase_lower:
-            print("🛡️ [Test Gate] Running pre-execution baseline...")
+            print("[Test Gate] Running pre-execution baseline...")
             success, output = await self._run_test_gate()
             if not success:
-                 print("⚠️ [Test Gate] Initial baseline check FAILED.")
+                 print("[Test Gate] Initial baseline check FAILED.")
                  history.append({
                      "role": "user",
                      "content": f"PRE-CONDITION WARNING: The test suite is FAILING at the start of this phase. Your priority is to fix the environment or code before proceeding.\n\nERROR:\n{output[-1000:]}"
@@ -418,15 +418,15 @@ class ExecutorAgent:
         
         for step in range(max_steps):
             self.current_step = step + 1
-            print(f"👉 [Executor] Step {step+1}/{max_steps}")
+            print(f"[Executor] Step {step+1}/{max_steps}")
 
             # 1. Loop Detection logic (Shell/Tool loops)
             loop_warning = ""
             if len(action_history) >= 3:
                 last_3 = action_history[-3:]
                 if all(a == last_3[0] for a in last_3):
-                    loop_warning = f"\n⚠️ TOOL LOOP DETECTED: You have attempted {last_3[0][0]} 3 times with identical parameters. You MUST change your strategy.\n"
-                    print(f"⚔️ [Executor] Tool Loop Buster Triggered!")
+                    loop_warning = f"\n TOOL LOOP DETECTED: You have attempted {last_3[0][0]} 3 times with identical parameters. You MUST change your strategy.\n"
+                    print(f"[Executor] Tool Loop Buster Triggered!")
 
             # 2. Build Multi-Turn Context (Strict Alternation)
             reflection_str = "\n".join([f"- {l}" for l in failure_lessons[-3:]])
@@ -457,7 +457,7 @@ class ExecutorAgent:
             # 3. Call LLM with formatted system prompt
             try:
                 from app.integrations.gemini import generate
-                print("🧠 [Executor] Thinking...")
+                print("[Executor] Thinking...")
                 
                 # Track activity: waiting for LLM
                 await self._set_activity("waiting_for_llm", {
@@ -483,7 +483,7 @@ class ExecutorAgent:
                 action_data = self._parse_action(action_raw)
                 thought = action_data.get("thought", "")
                 
-                # 🧠 Thought Loop Buster (Similarity check)
+                # Thought Loop Buster (Similarity check)
                 if last_thought:
                     similarity = difflib.SequenceMatcher(None, thought, last_thought).ratio()
                     if similarity > 0.85:
@@ -491,15 +491,15 @@ class ExecutorAgent:
                         history.append({"role": "model", "content": json.dumps(action_data)})
                         history.append({
                             "role": "user", 
-                            "content": "⚠️ LOOP WARNING: Your reasoning is almost identical to your last turn. You are stuck in a thought loop. STOP repeating yourself. Run a diagnostic command (ls -R, cat) to check the actual state of the file system and break your cycle."
+                            "content": "LOOP WARNING: Your reasoning is almost identical to your last turn. You are stuck in a thought loop. STOP repeating yourself. Run a diagnostic command (ls -R, cat) to check the actual state of the file system and break your cycle."
                         })
                         continue # Re-run with the warning
                 
                 last_thought = thought
-                print(f"💡 [Executor] Agent Action: {json.dumps(action_data)}")
+                print(f"[Executor] Agent Action: {json.dumps(action_data)}")
                 
             except Exception as e:
-                print(f"❌ [Executor] LLM generation failed: {e}")
+                print(f"[Executor] LLM generation failed: {e}")
                 await asyncio.sleep(2) # Prevent fast-failing infinite loops
                 if step > 10 and "400" in str(e):
                     # If we keep getting 400 errors, stop the bleeding
@@ -511,7 +511,7 @@ class ExecutorAgent:
             status = action_data.get("status")
             
             if not tool_name and status != "complete" and status != "incomplete" and status != "blocked":
-                print("⚠️ [Executor] Hallucination Nudge: Agent thought but didn't act.")
+                print("[Executor] Hallucination Nudge: Agent thought but didn't act.")
                 history.append({"role": "model", "content": json.dumps(action_data)})
                 history.append({
                     "role": "user",
@@ -527,7 +527,7 @@ class ExecutorAgent:
                 test_commands = verification.get("test_commands", [])
                 
                 if test_commands:
-                    print(f"🛡️ [Test Gate] Running verification commands from plan...")
+                    print(f"[Test Gate] Running verification commands from plan...")
                     all_passed = True
                     fail_output = ""
                     for cmd in test_commands:
@@ -540,7 +540,7 @@ class ExecutorAgent:
                             fail_output = output
                             break
                     if not all_passed:
-                        print("❌ [Test Gate] Plan Verification Failed!")
+                        print("[Test Gate] Plan Verification Failed!")
                         error_msg = f"BLOCKING: Phase verification FAILED.\n\nERROR:\n{fail_output[-2000:]}"
                         history.append({"role": "user", "content": error_msg})
                         # Update Reflection
@@ -556,13 +556,13 @@ class ExecutorAgent:
                         if lesson not in failure_lessons: failure_lessons.append(lesson)
                         continue
 
-                print(f"✅ Phase {phase_id} complete!")
+                print(f"Phase {phase_id} complete!")
                 await self._emit("phase_completed", {"phase_id": phase_id})
                 return
             
             if status in ["incomplete", "blocked"]:
                 reason = action_data.get("thought", "Agent signaled failure")
-                print(f"🛑 [Executor] Agent gave up: {status} - {reason}")
+                print(f"[Executor] Agent gave up: {status} - {reason}")
                 await self._emit("phase_error", {"phase_id": phase_id, "error": f"Agent {status}: {reason}"})
                 raise Exception(f"Phase {phase_id} terminated by agent ({status}): {reason}")
 
@@ -650,7 +650,7 @@ class ExecutorAgent:
                 
                 # Trigger grounding after 2 consecutive failures
                 if consecutive_failures >= 2:
-                    print(f"🔍 [Executor] Command failed {consecutive_failures} times, searching for solution...")
+                    print(f"[Executor] Command failed {consecutive_failures} times, searching for solution...")
                     solution = await self._search_for_solution(result_output, cmd)
                     
                     # Inject solution into history before observation
@@ -695,7 +695,7 @@ class ExecutorAgent:
                     history = history[-30:]
 
         # If we reach here, max steps exceeded
-        print(f"⚠️ Phase {phase_id} max steps exceeded")
+        print(f"Phase {phase_id} max steps exceeded")
         await self._emit("phase_error", {"phase_id": phase_id, "error": f"Max steps exceeded ({max_steps})"})
         raise Exception(f"Phase {phase_id} failed to complete in {max_steps} steps")
 
@@ -739,7 +739,7 @@ Search for a solution to this error and provide:
 
 Be concise and actionable."""
         
-        print(f"🔍 [Executor] Searching for solution to error...")
+        print(f"[Executor] Searching for solution to error...")
         
         try:
             result = await generate_with_grounding(
@@ -750,7 +750,7 @@ Be concise and actionable."""
             solution = result['text']
             sources = result['grounding_metadata'].get('sources', [])
             
-            print(f"💡 [Executor] Found solution from {len(sources)} sources")
+            print(f"[Executor] Found solution from {len(sources)} sources")
             
             # Add source citations
             if sources:
@@ -761,7 +761,7 @@ Be concise and actionable."""
             return solution
             
         except Exception as e:
-            print(f"⚠️ [Executor] Grounding search failed: {e}")
+            print(f"[Executor] Grounding search failed: {e}")
             return f"Unable to search for solution (grounding error: {str(e)}). Try a different approach based on the error message."
 
 
@@ -872,7 +872,7 @@ Be concise and actionable."""
 
         purge_context = ""
         if purged_files:
-            purge_context = f"\n⚠️ AUTONOMOUS PURGE: Kandra automatically cleaned up the following forbidden files at start: {', '.join(purged_files)}\n"
+            purge_context = f"\n AUTONOMOUS PURGE: Kandra automatically cleaned up the following forbidden files at start: {', '.join(purged_files)}\n"
 
         prompt = f"""
 WORKSPACE LAYOUT:
@@ -932,10 +932,10 @@ What is your next action? (Response MUST be JSON)
                 if os.path.exists(pip_path):
                      subprocess.run([pip_path, "install", "--upgrade", "pip"], check=False, cwd=self.target_dir)
 
-                print("✅ [Python Setup] Virtual environment created.")
+                print("[Python Setup] Virtual environment created.")
                 
             except Exception as e:
-                print(f"⚠️ [Python Setup] Failed to create venv: {e}")
+                print(f"[Python Setup] Failed to create venv: {e}")
 
     async def _purge_pollution(self) -> List[str]:
         """Automatically delete files that violate the Language Lock before starting a phase."""
@@ -974,12 +974,12 @@ What is your next action? (Response MUST be JSON)
                     try:
                         os.remove(file_path)
                         purged_files.append(f)
-                        print(f"   🗑️ Purged pollution: {f}")
+                        print(f"   Purged pollution: {f}")
                     except Exception as e:
-                        print(f"   ⚠️ Failed to purge {f}: {e}")
+                        print(f"   Failed to purge {f}: {e}")
         
         if purged_files:
-            print(f"✅ [Executor] Purged {len(purged_files)} polluting files. Workspace is now 100% pure.")
+            print(f"[Executor] Purged {len(purged_files)} polluting files. Workspace is now 100% pure.")
             await self._emit("cleanup_status", {"purged_count": len(purged_files)})
         
         return purged_files
@@ -1011,11 +1011,11 @@ What is your next action? (Response MUST be JSON)
                 "timestamp": event.created_at.isoformat() if event.created_at else datetime.utcnow().isoformat()
             }
             
-            print(f"📡 [Executor DEBUG] Emitting {event_type} (payload size: {len(str(payload))}) -> DB & BUS")
+            print(f"[Executor DEBUG] Emitting {event_type} (payload size: {len(str(payload))}) -> DB & BUS")
             await bus.publish(f"job:{self.job.id}", msg)
             
         except Exception as e:
-            print(f"❌ Failed to emit event {event_type}: {e}")
+            print(f"Failed to emit event {event_type}: {e}")
             import traceback
             traceback.print_exc()
 
@@ -1024,13 +1024,13 @@ What is your next action? (Response MUST be JSON)
         Intelligent Test Runner using discovered test framework from plan.
         Falls back to smart detection if test framework not specified.
         """
-        print(f"🛡️ [Test Gate] Running validation...")
+        print(f"[Test Gate] Running validation...")
         
         command = ""
         
         # Use discovered test framework if available
         if self.test_framework:
-            print(f"🛡️ [Test Gate] Using discovered test framework: {self.test_framework}")
+            print(f"[Test Gate] Using discovered test framework: {self.test_framework}")
             
             # Python test frameworks
             if self.test_framework == "pytest":
@@ -1053,7 +1053,7 @@ What is your next action? (Response MUST be JSON)
         # Fallback: smart detection based on stack
         if not command:
             stack = self.job.target_stack.lower()
-            print(f"🛡️ [Test Gate] No test framework specified, detecting from stack: {stack}")
+            print(f"[Test Gate] No test framework specified, detecting from stack: {stack}")
             
             if "python" in stack or "django" in stack or "flask" in stack or "fastapi" in stack:
                 # Check if pytest exists
@@ -1074,7 +1074,7 @@ What is your next action? (Response MUST be JSON)
         if not command:
             return True, "No test strategy found. Skipping."
 
-        print(f"🛡️ [Test Gate] Executing: {command}")
+        print(f"[Test Gate] Executing: {command}")
         
         try:
             tool = self.tools["run_command"]
