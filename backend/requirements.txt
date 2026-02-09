@@ -22,3 +22,4 @@ httpx
 python-dotenv
 python-multipart
 pytest
+fpdf2

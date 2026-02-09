@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 
 import { api } from "@/lib/api";
 import ReactMarkdown from "react-markdown";
+import { MermaidDiagram } from "@/components/MermaidDiagram";
 
 // === Constants ===
 
@@ -43,21 +44,50 @@ export function AuditView({ jobId }: { jobId?: string }) {
     const [error, setError] = useState<string | null>(null);
 
     // PR State
-    const [repoUrl, setRepoUrl] = useState("acme-corp/financial-engine");
+    const [repoUrl, setRepoUrl] = useState("");
     const [branchName, setBranchName] = useState("kandra/migration-refactor");
     const [submittingPr, setSubmittingPr] = useState(false);
     const [prSuccessUrl, setPrSuccessUrl] = useState<string | null>(null);
 
-    // Fetch Audit Data
+    // GitHub Connection State
+    const [isGitHubConnected, setIsGitHubConnected] = useState(false);
+    const [githubUser, setGithubUser] = useState<any>(null);
+    const [checkingGitHub, setCheckingGitHub] = useState(true);
+
     React.useEffect(() => {
         if (!jobId) return;
 
-        const fetchAudit = async () => {
+        const fetchData = async () => {
             try {
                 setLoading(true);
-                // Poll for a bit to simulate "live" audit feel if it's too fast
-                await new Promise(r => setTimeout(r, 1500));
+                // Check GitHub Status first
+                try {
+                    const status = await api.github.getStatus();
+                    setIsGitHubConnected(status.connected);
+                    setGithubUser(status.user);
+                } catch (e) {
+                    console.error("Failed to check GitHub status:", e);
+                } finally {
+                    setCheckingGitHub(false);
+                }
 
+                // Fetch job info to pre-fill repo
+                try {
+                    const jobData = await api.jobs.get(jobId);
+                    if (jobData) {
+                        const cleanRepo = jobData.repo_url
+                            .replace("https://github.com/", "")
+                            .replace("http://github.com/", "")
+                            .replace(".git", "")
+                            .replace(/^\/+|\/+$/g, "");
+                        setRepoUrl(cleanRepo);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch job info:", e);
+                }
+
+                // Poll for audit report
+                await new Promise(r => setTimeout(r, 1500));
                 const data = await api.jobs.getAuditReport(jobId);
                 setReport(data);
                 setLoading(false);
@@ -68,8 +98,31 @@ export function AuditView({ jobId }: { jobId?: string }) {
             }
         };
 
-        fetchAudit();
+        fetchData();
     }, [jobId]);
+
+    // Handle Download
+    const handleDownload = () => {
+        const downloadUrl = `${api.API_URL}/api/jobs/${jobId}/download`;
+        window.location.href = downloadUrl;
+    };
+
+    const handleDownloadPDF = () => {
+        const downloadUrl = `${api.API_URL}/api/jobs/${jobId}/audit/download-pdf`;
+        window.location.href = downloadUrl;
+    };
+
+    // Handle GitHub Connection
+    const handleConnectGitHub = async () => {
+        try {
+            const { auth_url } = await api.github.getAuthUrl();
+            // Store current path for return
+            sessionStorage.setItem("github_auth_return", window.location.pathname + window.location.search);
+            window.location.href = auth_url;
+        } catch (err: any) {
+            alert("Failed to initiate GitHub connection: " + err.message);
+        }
+    };
 
     // Handle PR Submission
     const handleSubmitPR = async () => {
@@ -144,9 +197,12 @@ export function AuditView({ jobId }: { jobId?: string }) {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <button className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
+                        <button
+                            onClick={handleDownload}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
+                        >
                             <Download className="w-4 h-4" />
-                            Download Report
+                            Download Code (ZIP)
                         </button>
                         <button
                             onClick={() => setActiveTab("git")}
@@ -337,14 +393,36 @@ export function AuditView({ jobId }: { jobId?: string }) {
                                             MIGRATION_DOSSIER.md
                                         </div>
                                     </div>
-                                    <button className="text-[10px] font-bold text-blue-600 hover:text-blue-700 transition-all flex items-center gap-1.5">
-                                        <Download className="w-3.5 h-3.5" /> DOWNLOAD MD
+                                    <button
+                                        onClick={handleDownloadPDF}
+                                        className="text-[10px] font-bold text-blue-600 hover:text-blue-700 transition-all flex items-center gap-1.5"
+                                    >
+                                        <Download className="w-3.5 h-3.5" /> DOWNLOAD
                                     </button>
                                 </div>
                                 <div className="flex-1 p-12 overflow-y-auto font-serif prose prose-slate max-w-none">
                                     <div className="max-w-4xl mx-auto">
                                         {report?.dossier ? (
-                                            <ReactMarkdown>{report.dossier}</ReactMarkdown>
+                                            <ReactMarkdown
+                                                components={{
+                                                    code({ node, inline, className, children, ...props }: any) {
+                                                        const match = /language-(\w+)/.exec(className || "");
+                                                        const lang = match ? match[1] : "";
+
+                                                        if (!inline && lang === "mermaid") {
+                                                            return <MermaidDiagram chart={String(children).replace(/\n$/, "")} />;
+                                                        }
+
+                                                        return (
+                                                            <code className={className} {...props}>
+                                                                {children}
+                                                            </code>
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                {report.dossier}
+                                            </ReactMarkdown>
                                         ) : (
                                             <p className="text-gray-400 italic">Generating dossier...</p>
                                         )}
@@ -369,56 +447,86 @@ export function AuditView({ jobId }: { jobId?: string }) {
 
                                         {!prSuccessUrl ? (
                                             <div className="space-y-6">
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Repository Target</label>
-                                                    <div className="relative group">
-                                                        <Github className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                                                        <input
-                                                            type="text"
-                                                            placeholder="username/repository"
-                                                            value={repoUrl}
-                                                            onChange={(e) => setRepoUrl(e.target.value)}
-                                                            className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium"
-                                                        />
+                                                {!isGitHubConnected ? (
+                                                    <div className="p-8 bg-blue-50 rounded-3xl border border-blue-100 flex flex-col items-center text-center">
+                                                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+                                                            <Github className="w-6 h-6 text-blue-600" />
+                                                        </div>
+                                                        <h4 className="font-bold text-blue-900 mb-2">GitHub Not Connected</h4>
+                                                        <p className="text-blue-700 text-xs mb-6 opacity-70">You need to connect your GitHub account to enable automated pull request delivery.</p>
+                                                        <button
+                                                            onClick={handleConnectGitHub}
+                                                            className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all"
+                                                        >
+                                                            Connect GitHub
+                                                        </button>
                                                     </div>
-                                                </div>
+                                                ) : (
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100 mb-2">
+                                                            <img
+                                                                src={githubUser?.avatar_url}
+                                                                alt={githubUser?.login}
+                                                                className="w-8 h-8 rounded-full border border-gray-200"
+                                                            />
+                                                            <div>
+                                                                <div className="text-[10px] font-bold text-gray-400 leading-none">CONNECTED AS</div>
+                                                                <div className="text-xs font-bold text-gray-900">{githubUser?.login}</div>
+                                                            </div>
+                                                        </div>
 
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Branch Name</label>
-                                                    <div className="relative group">
-                                                        <CheckCircle2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                                                        <input
-                                                            type="text"
-                                                            value={branchName}
-                                                            onChange={(e) => setBranchName(e.target.value)}
-                                                            className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium"
-                                                        />
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Repository Target</label>
+                                                            <div className="relative group">
+                                                                <Github className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="username/repository"
+                                                                    value={repoUrl}
+                                                                    onChange={(e) => setRepoUrl(e.target.value)}
+                                                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Branch Name</label>
+                                                            <div className="relative group">
+                                                                <CheckCircle2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                                                                <input
+                                                                    type="text"
+                                                                    value={branchName}
+                                                                    onChange={(e) => setBranchName(e.target.value)}
+                                                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="pt-4">
+                                                            <button
+                                                                onClick={handleSubmitPR}
+                                                                disabled={submittingPr}
+                                                                className="w-full py-5 bg-gray-900 text-white font-bold rounded-2xl flex items-center justify-center gap-3 hover:bg-black transition-all hover:shadow-2xl hover:shadow-gray-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            >
+                                                                {submittingPr ? (
+                                                                    <>
+                                                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                                        Submitting...
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <Github className="w-5 h-5" />
+                                                                        Submit Golden Pull Request
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                </div>
-
-                                                <div className="pt-4">
-                                                    <button
-                                                        onClick={handleSubmitPR}
-                                                        disabled={submittingPr}
-                                                        className="w-full py-5 bg-gray-900 text-white font-bold rounded-2xl flex items-center justify-center gap-3 hover:bg-black transition-all hover:shadow-2xl hover:shadow-gray-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    >
-                                                        {submittingPr ? (
-                                                            <>
-                                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                                Submitting...
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Github className="w-5 h-5" />
-                                                                Submit Golden Pull Request
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                    <p className="text-center text-[10px] text-gray-400 mt-4 leading-relaxed font-medium capitalize flex items-center justify-center gap-1.5 opacity-60">
-                                                        <Lock className="w-2.5 h-2.5" />
-                                                        Private repository access is secured via temporary PAT
-                                                    </p>
-                                                </div>
+                                                )}
+                                                <p className="text-center text-[10px] text-gray-400 mt-4 leading-relaxed font-medium capitalize flex items-center justify-center gap-1.5 opacity-60">
+                                                    <Lock className="w-2.5 h-2.5" />
+                                                    Private repository access is secured via temporary PAT
+                                                </p>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center justify-center py-8 animate-in fade-in zoom-in duration-500">

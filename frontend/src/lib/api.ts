@@ -4,7 +4,7 @@
  * Clean, type-safe API functions with error handling
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // === Types ===
 
@@ -243,6 +243,7 @@ export const jobs = {
 // === Default Export ===
 
 export const api = {
+    API_URL,
     github,
     health,
     jobs,
